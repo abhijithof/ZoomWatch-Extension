@@ -1,81 +1,246 @@
-# 🚀 ZoomWatch Extension Installation Guide
+# 🚀 ZoomWatch Installation & Setup Guide
 
-## Quick Fix Steps
+<div align="center">
 
-If your extension isn't working, follow these steps in order:
+![Installation Guide](https://img.shields.io/badge/📦-Installation%20Guide-blue?style=for-the-badge)
+![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-green?style=for-the-badge&logo=google-chrome)
+![Easy Setup](https://img.shields.io/badge/Setup-Easy-success?style=for-the-badge)
 
-### 1. 🔄 Reload the Extension
-1. Go to `chrome://extensions/`
-2. Make sure "Developer mode" is enabled (toggle in top right)
-3. Find "ZoomWatch Camera Monitor" in the list
-4. Click the "Reload" button (🔄 icon)
-5. Wait for it to reload
+**Complete guide to install and configure your ZoomWatch extension**
 
-### 2. 🌐 Refresh Zoom Pages
-1. After reloading the extension, refresh any open Zoom tabs
-2. Or close and reopen Zoom tabs
-3. Make sure you're on a `zoom.us` domain
+</div>
 
-### 3. 🧪 Test the Extension
-1. Open `test-zoomwatch.html` in your browser
-2. Click "Run All Tests" to check if everything is working
-3. Look for any error messages
+## 📦 Quick Installation
 
-### 4. 🔍 Check Console for Errors
-1. Open Developer Tools (F12) on a Zoom page
-2. Look in the Console tab for messages starting with `[ZoomWatch]`
-3. Check for any red error messages
+### Method 1: Clone from GitHub (Recommended)
 
-## Common Issues & Solutions
+```bash
+# Clone the repository
+git clone https://github.com/abhijithof/ZoomWatch-Extension.git
+
+# Navigate to the folder
+cd ZoomWatch-Extension
+```
+
+### Method 2: Download ZIP
+
+1. Visit [GitHub Repository](https://github.com/abhijithof/ZoomWatch-Extension)
+2. Click **"Code"** → **"Download ZIP"**
+3. Extract to a folder on your computer
+
+## 🔧 Chrome Extension Setup
+
+### Step 1: Enable Developer Mode
+
+1. **Open Chrome Extensions**: Navigate to `chrome://extensions/`
+2. **Enable Developer Mode**: Toggle the switch in the **top-right corner**
+3. **Verify**: You should see additional buttons appear
+
+### Step 2: Load the Extension
+
+1. **Click "Load unpacked"**: Button should be visible after enabling developer mode
+2. **Select Folder**: Choose the `ZoomWatch-Extension` folder
+3. **Confirm**: The extension will appear in your extensions list
+
+### Step 3: Verify Installation
+
+✅ **Check for ZoomWatch icon** in your Chrome toolbar  
+✅ **Extension appears** in `chrome://extensions/` list  
+✅ **No error messages** in the extension card  
+
+## 🎯 Testing Your Installation
+
+### Basic Functionality Test
+
+1. **Join a Zoom Meeting**: Use the web client at `zoom.us`
+2. **Open Participants Panel**: Make sure it's visible in Zoom
+3. **Click ZoomWatch Icon**: Should open the modern popup
+4. **Check Connection Status**: Look for green "Connected" indicator
+5. **Start Monitoring**: Click the "▶️ Start Monitoring" button
+
+### Expected Results
+
+🟢 **Connection Status**: "Connected" with green dot  
+🟢 **Participant Count**: Shows actual number of participants  
+🟢 **Camera Status**: Displays correct ON/OFF counts  
+🟢 **Real-time Updates**: Numbers change when participants join/leave  
+
+## 🛠️ Troubleshooting
 
 ### ❌ Extension Not Loading
-- **Solution**: Reload the extension in `chrome://extensions/`
-- **Check**: Make sure "Developer mode" is enabled
 
-### ❌ Content Script Not Working
-- **Solution**: Refresh the Zoom page after installing the extension
-- **Check**: Look for `window.ZoomWatch` in console
+**Problem**: ZoomWatch doesn't appear in toolbar
 
-### ❌ Not on Zoom Page
-- **Solution**: Navigate to `https://zoom.us` or join a meeting
-- **Check**: URL must contain `zoom.us`
+**Solutions**:
+```bash
+1. Go to chrome://extensions/
+2. Find "ZoomWatch" in the list
+3. Click the reload button (🔄)
+4. Check for any error messages
+5. Ensure all files are present in folder
+```
 
-### ❌ Communication Errors
-- **Solution**: Check if background script is running
-- **Check**: Look for extension errors in `chrome://extensions/`
+### ❌ "Not on Zoom" Message
 
-## Testing Your Extension
+**Problem**: Extension shows "Not on Zoom" even when in meeting
 
-1. **Open the test page**: `test-zoomwatch.html`
-2. **Run diagnostics**: Click "Run All Tests"
-3. **Check results**: Look for green checkmarks
-4. **Follow recommendations**: If tests fail, follow the troubleshooting steps
+**Solutions**:
+```bash
+1. Verify you're using zoom.us (not desktop app)
+2. Check URL contains '/wc/' and '/join' or '/start'
+3. Refresh the Zoom page
+4. Make sure you're in an actual meeting, not homepage
+```
 
-## Still Not Working?
+### ❌ No Participants Detected
 
-If none of the above works:
+**Problem**: Shows "0 participants" even with people in meeting
 
-1. **Check the troubleshooting guide**: `TROUBLESHOOTING.md`
-2. **Use the debug helper**: `debug-extension.html`
-3. **Run the fix script**: Copy and paste the contents of `fix-extension.js` into the browser console on a Zoom page
+**Solutions**:
+```bash
+1. Open the participants panel in Zoom (sidebar)
+2. Wait 5-10 seconds for dynamic loading
+3. Check console for [ZoomWatch] messages
+4. Try stopping and restarting monitoring
+```
 
-## File Structure
+### ❌ Permission Errors
 
-Make sure all these files are present:
-- `manifest.json` - Extension configuration
-- `content.js` - Main extension logic
-- `popup.js` - Extension popup interface
-- `background.js` - Background service worker
-- `popup.html` - Extension popup HTML
-- `styles.css` - Extension styling
+**Problem**: Extension can't access Zoom pages
 
-## Need Help?
+**Solutions**:
+```bash
+1. Check manifest.json is present
+2. Reload extension in chrome://extensions/
+3. Grant permissions when prompted
+4. Refresh Zoom tabs after installation
+```
 
-1. Check the console for error messages
-2. Use the test page to diagnose issues
-3. Follow the troubleshooting guide
-4. Make sure you're on a Zoom page when testing
+## 🔍 Advanced Debugging
+
+### Console Debugging
+
+1. **Open Developer Tools**: Press `F12` on Zoom page
+2. **Go to Console Tab**: Look for messages
+3. **Filter by ZoomWatch**: Search for `[ZoomWatch]`
+4. **Check for Errors**: Red messages indicate issues
+
+### Extension Debugging
+
+1. **Go to Extensions Page**: `chrome://extensions/`
+2. **Find ZoomWatch**: In the extensions list
+3. **Click "Inspect views"**: Select "popup.html"
+4. **Check Console**: For popup-specific errors
+
+### Network Issues
+
+```bash
+# If extension won't load from GitHub:
+1. Check internet connection
+2. Try downloading ZIP instead
+3. Verify folder structure is correct
+4. Ensure no antivirus blocking
+```
+
+## 📁 File Structure Verification
+
+Make sure your folder contains these files:
+
+```
+ZoomWatch-Extension/
+├── ✅ manifest.json       # Extension configuration
+├── ✅ content.js          # Main monitoring logic
+├── ✅ background.js       # Service worker
+├── ✅ popup.html          # Modern UI layout
+├── ✅ popup.js            # Popup functionality
+├── ✅ styles.css          # Beautiful styling
+├── ✅ .gitignore          # Development files
+├── ✅ README.md           # Documentation
+├── ✅ INSTALL.md          # This file
+└── ✅ TROUBLESHOOTING.md  # Detailed help
+```
+
+## 🎨 UI Features Guide
+
+### Modern Popup Interface
+
+**Header Section**:
+- 🌈 Animated gradient background
+- 📱 Connection status indicator
+- 🎭 ZoomWatch branding
+
+**Stats Cards**:
+- 👥 Total participants count
+- 📹 Cameras ON count  
+- 📷 Cameras OFF count
+- ✨ Hover animations
+
+**Control Buttons**:
+- ▶️ Start/Stop monitoring
+- 🔄 Manual refresh
+- 🔍 Debug console
+- ⚙️ Settings (coming soon)
+
+### Real-time Features
+
+- **Live Updates**: Every 2 seconds
+- **Smooth Animations**: Number changes animate
+- **Status Indicators**: Color-coded feedback
+- **Loading States**: Visual feedback during actions
+
+## 🚀 Performance Tips
+
+### Optimal Usage
+
+1. **Start monitoring only when needed** to save resources
+2. **Keep participants panel open** for best detection
+3. **Use latest Chrome version** for best compatibility
+4. **Close unused tabs** if experiencing slowness
+
+### Browser Requirements
+
+- **Chrome 88+**: For Manifest V3 support
+- **JavaScript Enabled**: Required for functionality
+- **Local Storage**: For settings persistence
+- **Zoom Web Client**: Desktop app not supported
+
+## ✅ Installation Checklist
+
+Before reporting issues, verify:
+
+- [ ] **Developer mode enabled** in Chrome
+- [ ] **Extension loaded** successfully  
+- [ ] **No error messages** in extensions page
+- [ ] **ZoomWatch icon** visible in toolbar
+- [ ] **Using Zoom web client** (not desktop app)
+- [ ] **In actual meeting** (not homepage)
+- [ ] **Participants panel open** in Zoom
+- [ ] **Console shows** `[ZoomWatch]` messages
+
+## 📞 Getting Help
+
+### Self-Help Resources
+
+1. 📖 **README.md**: Comprehensive feature guide
+2. 🛠️ **TROUBLESHOOTING.md**: Detailed problem solutions  
+3. 🔍 **Browser Console**: Real-time debugging info
+4. 💬 **Extension Popup**: Status and error messages
+
+### Community Support
+
+1. 🐛 **GitHub Issues**: Report bugs or request features
+2. 💡 **Discussions**: Share tips and tricks
+3. 📧 **Contact**: For technical support
 
 ---
 
-**Remember**: The extension only works on `zoom.us` domains and requires the page to be fully loaded!
+<div align="center">
+
+**🎯 Ready to monitor your Zoom meetings like a pro!**
+
+![Chrome Extension](https://img.shields.io/badge/Built%20for-Chrome%20Users-blue?style=for-the-badge&logo=google-chrome)
+![Production Ready](https://img.shields.io/badge/Status-Production%20Ready-success?style=for-the-badge)
+
+**From installation to monitoring in under 2 minutes! ⚡**
+
+</div>
