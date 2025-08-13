@@ -1,0 +1,39 @@
+{
+  "manifest_version": 3,
+  "name": "ZoomWatch Camera Monitor",
+  "version": "1.0",
+  "description": "Monitor camera status in Zoom meetings and send automatic reminders",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "tabs",
+    "notifications",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://*.zoom.us/*",
+    "https://zoom.us/*"
+  ],
+  "content_scripts": [{
+    "matches": [
+      "https://*.zoom.us/*",
+      "https://zoom.us/*"
+    ],
+    "js": ["content.js"],
+    "css": ["styles.css"],
+    "run_at": "document_end",
+    "all_frames": true
+  }],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "ZoomWatch"
+  },
+  "web_accessible_resources": [{
+    "resources": ["content.js", "popup.js"],
+    "matches": ["https://*.zoom.us/*", "https://zoom.us/*"]
+  }]
+}
