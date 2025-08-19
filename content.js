@@ -37,7 +37,7 @@
         if (isIframe) {
             for (const selector of participantSelectors) {
                 if (document.querySelector(selector)) {
-                    log(`SUCCESS: Found participants in iframe: ${selector}`);
+                    log(`✅ Found participants in iframe: ${selector}`);
                     return true;
                 }
             }
@@ -54,12 +54,12 @@
             
             for (const selector of meetingIndicators) {
                 if (document.querySelector(selector)) {
-                    log(`SUCCESS: Found meeting indicator in iframe: ${selector}`);
+                    log(`✅ Found meeting indicator in iframe: ${selector}`);
                     return true;
                 }
             }
             
-            log('ERROR: No participants or meeting indicators found in iframe');
+            log('❌ No participants or meeting indicators found in iframe');
             return false;
         }
         
@@ -70,7 +70,7 @@
                 const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
                 for (const selector of participantSelectors) {
                     if (iframeDoc.querySelector(selector)) {
-                        log(`SUCCESS: Found participants in iframe: ${selector}`);
+                        log(`✅ Found participants in iframe: ${selector}`);
                     return true;
                     }
                 }
@@ -79,7 +79,7 @@
             }
         }
         
-        log('ERROR: No participants found in any iframe');
+        log('❌ No participants found in any iframe');
         return false;
     }
     
@@ -148,11 +148,11 @@
     
     // Open participants panel programmatically
     function openParticipantsPanel() {
-        log('OPEN: Attempting to open participants panel...');
+        log('🔓 Attempting to open participants panel...');
         
         // Safety check: only allow in meeting context (but be more lenient in iframes)
         if (!isInZoomMeeting() && !isIframe) {
-            log('ERROR: Cannot open participants panel: Not in a Zoom meeting');
+            log('❌ Cannot open participants panel: Not in a Zoom meeting');
             return false;
         }
         
@@ -176,22 +176,22 @@
         for (const selector of participantsSelectors) {
             const button = document.querySelector(selector);
             if (button && button.offsetWidth > 0) {
-                log(`SUCCESS: Found participants button: ${selector}`);
+                log(`✅ Found participants button: ${selector}`);
                 log(`   Aria-label: "${button.getAttribute('aria-label')}" | Class: "${button.className}"`);
                 button.click();
-                log('SUCCESS: Participants panel opened');
+                log('✅ Participants panel opened');
                 return true;
             }
         }
         
         // Debug: show all buttons with "participant" in aria-label
         const participantButtons = document.querySelectorAll('[aria-label*="participant" i]');
-        log(`INFO: Found ${participantButtons.length} buttons with "participant" in aria-label:`);
+        log(`🔍 Found ${participantButtons.length} buttons with "participant" in aria-label:`);
         participantButtons.forEach((btn, i) => {
             log(`  ${i + 1}: "${btn.getAttribute('aria-label')}" | visible: ${btn.offsetWidth > 0}`);
         });
         
-        log('ERROR: Participants button not found - panel may already be open');
+        log('❌ Participants button not found - panel may already be open');
         return false;
     }
     
@@ -210,32 +210,32 @@
         for (const selector of possibleButtons) {
             const closeButton = document.querySelector(selector);
             if (closeButton && closeButton.offsetWidth > 0) {
-                log(`SUCCESS: Found close participants button: ${selector}`);
+                log(`✅ Found close participants button: ${selector}`);
                 log(`   Aria-label: "${closeButton.getAttribute('aria-label')}"`);
                 closeButton.click();
-                log('SUCCESS: Participants panel closed');
+                log('✅ Participants panel closed');
                 return true;
             }
         }
         
         // Debug: show all buttons with "participants" in aria-label
         const participantButtons = document.querySelectorAll('[aria-label*="participant" i]');
-        log(`INFO: Found ${participantButtons.length} buttons with "participants" in aria-label:`);
+        log(`🔍 Found ${participantButtons.length} buttons with "participants" in aria-label:`);
         participantButtons.forEach((btn, i) => {
             log(`  ${i + 1}: "${btn.getAttribute('aria-label')}" | visible: ${btn.offsetWidth > 0}`);
         });
         
-        log('ERROR: Close participants button not found - panel may already be closed');
+        log('❌ Close participants button not found - panel may already be closed');
         return false;
     }
     
     // Open chat panel programmatically  
     function openChatPanel() {
-        log('CHAT: Attempting to open chat panel...');
+        log('💬 Attempting to open chat panel...');
         
         // Safety check: only allow in meeting context (but be more lenient in iframes)
         if (!isInZoomMeeting() && !isIframe) {
-            log('ERROR: Cannot open chat panel: Not in a Zoom meeting');
+            log('❌ Cannot open chat panel: Not in a Zoom meeting');
             return false;
         }
         
@@ -267,24 +267,24 @@
                 if (ariaLabel.toLowerCase().includes('team') || 
                     title.toLowerCase().includes('team') ||
                     className.toLowerCase().includes('team')) {
-                    log(`SKIP: Skipping team-related button: "${ariaLabel}" | class: "${className}"`);
+                    log(`⏭️ Skipping team-related button: "${ariaLabel}" | class: "${className}"`);
                     continue;
                 }
                 
                 // For iframes, be less restrictive about meeting controls
                 if (isIframe || className.includes('footer') || className.includes('control') || className.includes('bottom')) {
-                    log(`SUCCESS: Found chat button: ${selector}`);
+                    log(`✅ Found chat button: ${selector}`);
                     log(`   Aria-label: "${ariaLabel}" | Class: "${className}"`);
                     button.click();
-                    log('SUCCESS: Chat panel opened');
+                    log('✅ Chat panel opened');
                     return true;
                 } else {
-                    log(`SKIP: Skipping non-meeting button: "${ariaLabel}" | class: "${className}"`);
+                    log(`⏭️ Skipping non-meeting button: "${ariaLabel}" | class: "${className}"`);
                 }
             }
         }
         
-        log('ERROR: Meeting chat button not found - panel may already be open');
+        log('❌ Meeting chat button not found - panel may already be open');
         return false;
     }
     
@@ -303,22 +303,22 @@
         for (const selector of possibleButtons) {
             const closeButton = document.querySelector(selector);
             if (closeButton && closeButton.offsetWidth > 0) {
-                log(`SUCCESS: Found close chat button: ${selector}`);
+                log(`✅ Found close chat button: ${selector}`);
                 log(`   Aria-label: "${closeButton.getAttribute('aria-label')}"`);
                 closeButton.click();
-                log('SUCCESS: Chat panel closed');
+                log('✅ Chat panel closed');
                 return true;
             }
         }
         
         // Debug: show all buttons with "chat" in aria-label
         const chatButtons = document.querySelectorAll('[aria-label*="chat" i]');
-        log(`INFO: Found ${chatButtons.length} buttons with "chat" in aria-label:`);
+        log(`🔍 Found ${chatButtons.length} buttons with "chat" in aria-label:`);
         chatButtons.forEach((btn, i) => {
             log(`  ${i + 1}: "${btn.getAttribute('aria-label')}" | visible: ${btn.offsetWidth > 0}`);
         });
         
-        log('ERROR: Close chat button not found - panel may already be closed');
+        log('❌ Close chat button not found - panel may already be closed');
         return false;
     }
     
@@ -355,13 +355,13 @@
         for (const selector of chatSelectors) {
             const element = document.querySelector(selector);
             if (element && element.offsetWidth > 0) {
-                log(`SUCCESS: Found chat input in current document: ${selector}`);
+                log(`✅ Found chat input in current document: ${selector}`);
                 return element;
             }
         }
         
         // If not found, search in iframes
-        log('INFO: Chat input not found in current document, searching iframes...');
+        log('🔍 Chat input not found in current document, searching iframes...');
         const iframes = document.querySelectorAll('iframe');
         for (let i = 0; i < iframes.length; i++) {
             try {
@@ -369,16 +369,16 @@
                 for (const selector of chatSelectors) {
                     const element = iframeDoc.querySelector(selector);
                     if (element && element.offsetWidth > 0) {
-                        log(`SUCCESS: Found chat input in iframe ${i + 1}: ${selector}`);
+                        log(`✅ Found chat input in iframe ${i + 1}: ${selector}`);
                         return element;
                     }
                 }
             } catch (e) {
-                log(`WARNING: Could not access iframe ${i + 1}: ${e.message}`);
+                log(`⚠️ Could not access iframe ${i + 1}: ${e.message}`);
             }
         }
         
-        log('ERROR: Chat input not found in current document or any iframe');
+        log('❌ Chat input not found in current document or any iframe');
         return null;
     }
     
@@ -407,13 +407,13 @@
         for (const selector of sendSelectors) {
             const element = document.querySelector(selector);
             if (element && element.offsetWidth > 0) {
-                log(`SUCCESS: Found send button in current document: ${selector}`);
+                log(`✅ Found send button in current document: ${selector}`);
                 return element;
             }
         }
         
         // If not found, search in iframes
-        log('INFO: Send button not found in current document, searching iframes...');
+        log('🔍 Send button not found in current document, searching iframes...');
         const iframes = document.querySelectorAll('iframe');
         for (let i = 0; i < iframes.length; i++) {
             try {
@@ -421,29 +421,29 @@
                 for (const selector of sendSelectors) {
                     const element = iframeDoc.querySelector(selector);
                     if (element && element.offsetWidth > 0) {
-                        log(`SUCCESS: Found send button in iframe ${i + 1}: ${selector}`);
+                        log(`✅ Found send button in iframe ${i + 1}: ${selector}`);
                         return element;
                     }
                 }
             } catch (e) {
-                log(`WARNING: Could not access iframe ${i + 1}: ${e.message}`);
+                log(`⚠️ Could not access iframe ${i + 1}: ${e.message}`);
             }
         }
         
-        log('ERROR: Send button not found in current document or any iframe');
+        log('❌ Send button not found in current document or any iframe');
         return null;
     }
     
     // Send a message through Zoom chat
     async function sendChatMessage(message, recipientName = 'Everyone') {
         try {
-            log(`SEND: Attempting to send message: "${message}" to ${recipientName}`);
+            log(`📤 Attempting to send message: "${message}" to ${recipientName}`);
             
             // If sending to specific person, select them first
             if (recipientName !== 'Everyone') {
                 const recipientSelected = await selectChatRecipient(recipientName);
                 if (!recipientSelected) {
-                    log(`ERROR: Failed to select recipient ${recipientName} - ABORTING message send`);
+                    log(`❌ Failed to select recipient ${recipientName} - ABORTING message send`);
                     return false; // Don't send to Everyone as fallback - this causes spam
                 }
             }
@@ -451,7 +451,7 @@
             // Find chat input
             const chatInput = findChatInput();
             if (!chatInput) {
-                log('ERROR: Cannot send message: Chat input not found');
+                log('❌ Cannot send message: Chat input not found');
                 return false;
             }
             
@@ -459,14 +459,14 @@
             chatInput.focus();
             
             // Clear existing content and insert message using ProseMirror-compatible method
-            log(`INFO: Setting message text: "${message}" in chat input`);
-            log(`INFO: Chat input type: contentEditable=${chatInput.contentEditable}, tagName=${chatInput.tagName}`);
+            log(`🔍 Setting message text: "${message}" in chat input`);
+            log(`🔍 Chat input type: contentEditable=${chatInput.contentEditable}, tagName=${chatInput.tagName}`);
             
             if (chatInput.contentEditable === 'true') {
-                log('INFO: Using setProseMirrorText for contenteditable element');
+                log('🔍 Using setProseMirrorText for contenteditable element');
                 setProseMirrorText(chatInput, message);
             } else {
-                log('INFO: Using direct value assignment for input element');
+                log('🔍 Using direct value assignment for input element');
                 chatInput.value = message;
                 chatInput.dispatchEvent(new Event('input', { bubbles: true }));
                 chatInput.dispatchEvent(new Event('change', { bubbles: true }));
@@ -477,19 +477,19 @@
             
             // Verify the text was actually set
             const actualText = chatInput.contentEditable === 'true' ? chatInput.textContent : chatInput.value;
-            log(`INFO: Text verification: Input now contains: "${actualText}"`);
+            log(`🔍 Text verification: Input now contains: "${actualText}"`);
             
             // Find and click send button
             const sendButton = findChatSendButton();
-            log(`INFO: Send button found: ${sendButton ? 'YES' : 'NO'}, disabled: ${sendButton?.disabled}`);
+            log(`🔍 Send button found: ${sendButton ? 'YES' : 'NO'}, disabled: ${sendButton?.disabled}`);
             
             if (sendButton && !sendButton.disabled) {
-                log('INFO: Clicking send button...');
+                log('🔍 Clicking send button...');
                 sendButton.click();
-                log(`SUCCESS: Message sent successfully to ${recipientName}`);
+                log(`✅ Message sent successfully to ${recipientName}`);
                 return true;
             } else {
-                log('INFO: Send button not available, trying Enter key...');
+                log('🔍 Send button not available, trying Enter key...');
                 // Try Enter key as fallback
                 const enterEvent = new KeyboardEvent('keydown', {
                     key: 'Enter',
@@ -499,19 +499,19 @@
                     bubbles: true
                 });
                 chatInput.dispatchEvent(enterEvent);
-                log(`SUCCESS: Message sent via Enter key to ${recipientName}`);
+                log(`✅ Message sent via Enter key to ${recipientName}`);
                 return true;
             }
             
         } catch (error) {
-            log(`ERROR: Error sending chat message: ${error.message}`);
+            log(`❌ Error sending chat message: ${error.message}`);
             return false;
         }
     }
     
     // Select specific chat recipient instead of "Everyone"
     async function selectChatRecipient(recipientName) {
-        log(`TARGET: Selecting chat recipient: ${recipientName}`);
+        log(`🎯 Selecting chat recipient: ${recipientName}`);
         
         // Ensure chat panel is open first
         if (!isChatPanelOpen()) {
@@ -521,7 +521,7 @@
         
         // Find the iframe that owns the chat receiver button
         const { iframe: receiverIframe, doc: receiverDoc, win: receiverWin } = findReceiverOwnerIframe();
-        log(`INFO: Chat receiver owner: ${receiverIframe ? 'iframe' : 'main frame'}`);
+        log(`🔍 Chat receiver owner: ${receiverIframe ? 'iframe' : 'main frame'}`);
         
         // Find and click the receiver button to open dropdown - EXACTLY like ChatGPT code
         let receiverBtn = receiverDoc.querySelector('button.chat-receiver-list__receiver') ||
@@ -529,19 +529,19 @@
                          receiverDoc.querySelector('[class*="chat-receiver"]');
         
         if (!receiverBtn) {
-            log('ERROR: Receiver button not found in receiver iframe');
+            log('❌ Receiver button not found in receiver iframe');
             return false;
         }
         
-        log(`SUCCESS: Found receiver button in ${receiverIframe ? 'iframe' : 'main frame'}`);
+        log(`✅ Found receiver button in ${receiverIframe ? 'iframe' : 'main frame'}`);
         
         // Click to open dropdown - EXACTLY like ChatGPT code
         receiverBtn.click();
-        log('SUCCESS: Clicked receiver dropdown');
+        log('✅ Clicked receiver dropdown');
         await new Promise(r => setTimeout(r, 500));
         
         // Now find the ACTUAL chat recipient dropdown (not audio/video menus)
-        log('INFO: Searching for recipient in dropdown...');
+        log('🔍 Searching for recipient in dropdown...');
         
         // Look for the chat recipient dropdown specifically
         let dropdownMenu = receiverDoc.querySelector(
@@ -552,37 +552,37 @@
         );
         
         if (!dropdownMenu) {
-            log('ERROR: No chat recipient dropdown menu found after clicking receiver button');
-            log('INFO: Looking for any dropdown that might contain recipient options...');
+            log('❌ No chat recipient dropdown menu found after clicking receiver button');
+            log('🔍 Looking for any dropdown that might contain recipient options...');
             
             // Fallback: Look for any dropdown that contains participant names
             const allDropdowns = receiverDoc.querySelectorAll('[class*="dropdown"], [class*="menu"], [class*="options"], [class*="items"]');
-            log(`INFO: Found ${allDropdowns.length} potential dropdowns/menus`);
+            log(`🔍 Found ${allDropdowns.length} potential dropdowns/menus`);
             
             for (let i = 0; i < allDropdowns.length; i++) {
                 const dd = allDropdowns[i];
                 const text = dd.textContent?.trim() || '';
                 const className = dd.className || '';
-                log(`INFO: Dropdown ${i + 1}: ${dd.tagName}.${className} - Text: "${text.substring(0, 100)}"`);
+                log(`🔍 Dropdown ${i + 1}: ${dd.tagName}.${className} - Text: "${text.substring(0, 100)}"`);
                 
                 // Check if this dropdown contains participant names
                 if (text.includes('Abhi 2') || text.includes('Everyone') || text.includes('Meeting')) {
-                    log(`SUCCESS: Found dropdown with participant names: ${dd.tagName}.${className}`);
+                    log(`✅ Found dropdown with participant names: ${dd.tagName}.${className}`);
                     dropdownMenu = dd;
                     break;
                 }
             }
             
             if (!dropdownMenu) {
-                log('ERROR: Still no suitable dropdown found');
+                log('❌ Still no suitable dropdown found');
                 return false;
             }
         }
         
-        log(`SUCCESS: Found dropdown menu: ${dropdownMenu.tagName}.${dropdownMenu.className}`);
+        log(`✅ Found dropdown menu: ${dropdownMenu.tagName}.${dropdownMenu.className}`);
         
         // Debug: Show what's actually in the dropdown menu
-        log('INFO: Debug: Contents of dropdown menu:');
+        log('🔍 Debug: Contents of dropdown menu:');
         const allDropdownElements = dropdownMenu.querySelectorAll('*');
         for (let i = 0; i < Math.min(allDropdownElements.length, 10); i++) {
             const el = allDropdownElements[i];
@@ -610,19 +610,19 @@
         for (const selector of selList) {
             // Only search within the dropdown menu, not the entire document
             const elements = dropdownMenu.querySelectorAll(selector);
-            log(`INFO: Searching with selector "${selector}" in dropdown menu (found ${elements.length} elements)`);
+            log(`🔍 Searching with selector "${selector}" in dropdown menu (found ${elements.length} elements)`);
             
             for (const element of elements) {
                 const text = (element.textContent || '').trim();
                 if (!text) continue;
                 
-                log(`INFO: Checking element: "${text}" (${element.tagName}.${element.className})`);
+                log(`🔍 Checking element: "${text}" (${element.tagName}.${element.className})`);
                 
                 if (text === recipientName || 
                     text.includes(recipientName) || 
                     text.toLowerCase().includes(recipientName.toLowerCase())) {
                     target = element;
-                    log(`SUCCESS: Found recipient: "${text}" (matched "${recipientName}")`);
+                    log(`✅ Found recipient: "${text}" (matched "${recipientName}")`);
                     break;
                 }
             }
@@ -630,7 +630,7 @@
         }
         
         if (!target) {
-            log(`ERROR: Recipient "${recipientName}" not found in dropdown`);
+            log(`❌ Recipient "${recipientName}" not found in dropdown`);
             return false;
         }
         
@@ -640,11 +640,11 @@
         while (hops < 5 && clickable && !isClickable(clickable)) {
             clickable = clickable.parentElement;
             hops++;
-            if (hops > 1) log(`INFO: Checking parent level ${hops}: ${clickable?.tagName}.${clickable?.className}`);
+            if (hops > 1) log(`🔍 Checking parent level ${hops}: ${clickable?.tagName}.${clickable?.className}`);
         }
         if (!clickable) clickable = target;
         
-        log(`TARGET: Using React-compatible event sequence on: ${clickable.tagName}.${clickable.className}`);
+        log(`🎯 Using React-compatible event sequence on: ${clickable.tagName}.${clickable.className}`);
         await selectMenuItemReacty(clickable, receiverWin);
         await new Promise(resolve => setTimeout(resolve, 200));
         
@@ -661,14 +661,14 @@
             log(`🔎 Receiver now shows: "${got}" | matched=${ok}`);
             
             if (ok) {
-                log(`SUCCESS: Recipient selection successful for ${recipientName}`);
+                log(`✅ Recipient selection successful for ${recipientName}`);
                 return true;
             } else {
-                log(`WARNING: Recipient selection may have failed for ${recipientName}`);
+                log(`⚠️ Recipient selection may have failed for ${recipientName}`);
                 return false;
             }
         } else {
-            log('WARNING: Could not verify recipient selection - receiver button not found');
+            log('⚠️ Could not verify recipient selection - receiver button not found');
             return false;
         }
     }
@@ -676,15 +676,76 @@
     // SIMPLIFIED: Extension user IS the monitor - no profile detection needed
     // Removed detectMonitorProfile function as it's unnecessary
     
-
+    // DEBUG: Add click tracking to understand what elements need to be clicked
+    function addClickTracking() {
+        log('🔍 Adding click tracking for debugging...');
+        
+        // Track clicks on all elements
+        document.addEventListener('click', function(e) {
+            const target = e.target;
+            const text = target.textContent?.trim() || '';
+            const tagName = target.tagName;
+            const className = target.className;
+            const id = target.id;
+            
+            // Only log clicks on elements that might be relevant
+            if (text.includes('Everyone') || text.includes('Abhi') || 
+                className.includes('chat') || className.includes('recipient') || 
+                className.includes('participant') || className.includes('everyone')) {
+                log(`🖱️ CLICK TRACKED: ${tagName}.${className} (id: ${id}) - Text: "${text}"`);
+                
+                // Log the element's properties
+                log(`   Properties: role="${target.getAttribute('role')}", tabindex="${target.getAttribute('tabindex')}", onclick="${target.onclick ? 'yes' : 'no'}"`);
+                
+                // Log parent elements for context
+                let parent = target.parentElement;
+                let level = 1;
+                while (parent && level <= 3) {
+                    log(`   Parent ${level}: ${parent.tagName}.${parent.className}`);
+                    parent = parent.parentElement;
+                    level++;
+                }
+            }
+        }, true);
+        
+        // Also track clicks in iframes
+        const iframes = document.querySelectorAll('iframe');
+        iframes.forEach((iframe, index) => {
+            try {
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                iframeDoc.addEventListener('click', function(e) {
+                    const target = e.target;
+                    const text = target.textContent?.trim() || '';
+                    const tagName = target.tagName;
+                    const className = target.className;
+                    
+                    if (text.includes('Everyone') || text.includes('Abhi') || 
+                        className.includes('chat') || className.includes('recipient') || 
+                        className.includes('participant') || className.includes('everyone')) {
+                        log(`🖱️ IFRAME ${index + 1} CLICK TRACKED: ${tagName}.${className} - Text: "${text}"`);
+                    }
+                }, true);
+            } catch (e) {
+                log(`⚠️ Could not add click tracking to iframe ${index + 1}: ${e.message}`);
+            }
+        });
+        
+        log('✅ Click tracking added. Now manually click on the "Everyone" button and then on "Abhi 2" in the dropdown to see what elements are actually clickable.');
+    }
+    
+    // Manual trigger for click tracking (for testing)
+    function startClickTracking() {
+        log('🔍 Starting click tracking manually...');
+        addClickTracking();
+    }
     
     // Find the Participants tab and get participant list
     function findParticipantsList() {
-        log('INFO: Looking for Participants tab...');
+        log('🔍 Looking for Participants tab...');
         
         // ENHANCED: First check iframes for participants (since panels are now opening in iframes)
         if (window === window.top) {
-            log('INFO: Main frame detected, checking iframes for participants...');
+            log('🔍 Main frame detected, checking iframes for participants...');
             const iframes = document.querySelectorAll('iframe');
             
             for (let i = 0; i < iframes.length; i++) {
@@ -694,12 +755,12 @@
                     
                     // Check if this iframe contains the meeting
                     if (iframeUrl.includes('/wc/') && iframeUrl.includes('/start')) {
-                        log(`INFO: Checking meeting iframe ${i + 1} for participants: ${iframeUrl}`);
+                        log(`🔍 Checking meeting iframe ${i + 1} for participants: ${iframeUrl}`);
                         
                         // Look for participants in this iframe
                         const iframeParticipants = iframeDoc.querySelector('.participants-section-container');
                         if (iframeParticipants) {
-                            log(`SUCCESS: Found participants in meeting iframe ${i + 1}: .participants-section-container`);
+                            log(`✅ Found participants in meeting iframe ${i + 1}: .participants-section-container`);
                             return iframeParticipants;
                         }
                         
@@ -714,25 +775,25 @@
                         for (const selector of alternativeSelectors) {
                             const altParticipants = iframeDoc.querySelector(selector);
                             if (altParticipants) {
-                                log(`SUCCESS: Found participants in meeting iframe ${i + 1} with selector: ${selector}`);
+                                log(`✅ Found participants in meeting iframe ${i + 1} with selector: ${selector}`);
                                 return altParticipants;
                             }
                         }
                     }
                 } catch (e) {
-                    log(`WARNING: Could not access iframe ${i + 1}: ${e.message}`);
+                    log(`⚠️ Could not access iframe ${i + 1}: ${e.message}`);
                 }
             }
             
-            log('WARNING: No participants found in meeting iframes, falling back to main frame search...');
+            log('⚠️ No participants found in meeting iframes, falling back to main frame search...');
         }
         
         // Fallback: Search in current context (main frame or iframe)
-        log('INFO: Searching current context for participants...');
+        log('🔍 Searching current context for participants...');
         
         // Debug: Log all elements that might be participants-related
         const allParticipantElements = document.querySelectorAll('*[class*="participant" i]');
-        log(`INFO: Found ${allParticipantElements.length} elements with "participant" in class name`);
+        log(`🔍 Found ${allParticipantElements.length} elements with "participant" in class name`);
         allParticipantElements.forEach((el, i) => {
             if (i < 5) { // Log first 5 to avoid spam
                 log(`   ${i+1}: ${el.tagName}.${el.className}`);
@@ -743,7 +804,7 @@
         const participantsTextElements = Array.from(document.querySelectorAll('*')).filter(el => 
             el.textContent && el.textContent.includes('Participants') && el.offsetWidth > 0
         );
-        log(`INFO: Found ${participantsTextElements.length} elements containing "Participants" text`);
+        log(`🔍 Found ${participantsTextElements.length} elements containing "Participants" text`);
         participantsTextElements.forEach((el, i) => {
             if (i < 3) { // Log first 3
                 log(`   ${i+1}: ${el.tagName}.${el.className} - "${el.textContent.substring(0, 30)}"`);
@@ -753,28 +814,28 @@
         // Method 1: Look for the specific participants container (found in deep search!)
         const participantsContainer = document.querySelector('.participants-section-container');
         if (participantsContainer) {
-            log('SUCCESS: Found participants section container');
+            log('✅ Found participants section container');
             return participantsContainer;
         }
         
         // Method 2: Look for the participants list directly (found in deep search!)
         const participantsList = document.querySelector('.participants-list-container.participants-ul');
         if (participantsList) {
-            log('SUCCESS: Found participants list container');
+            log('✅ Found participants list container');
             return participantsList;
         }
         
         // Method 3: Look for participant items anywhere on the page (found in deep search!)
         const participantItems = document.querySelectorAll('.participants-li');
         if (participantItems.length > 0) {
-            log(`SUCCESS: Found ${participantItems.length} participant items`);
+            log(`✅ Found ${participantItems.length} participant items`);
             return participantItems[0].closest('.participants-section-container') || participantItems[0].parentElement;
         }
         
         // Method 4: Look for any element with "participant" in the class (case insensitive)
         const anyParticipantElement = document.querySelector('[class*="participant" i]');
         if (anyParticipantElement) {
-            log(`SUCCESS: Found participants in current context with selector: ${anyParticipantElement.className}`);
+            log(`✅ Found participants in current context with selector: ${anyParticipantElement.className}`);
             return anyParticipantElement.closest('[class*="section"], [class*="container"], [class*="wrapper"]') || anyParticipantElement;
         }
         
@@ -783,20 +844,20 @@
             el.textContent && (el.textContent.includes('ABHIJITH') || el.textContent.includes('ᴀʙʜɪᴊɪᴛʜ')) && el.offsetWidth > 0
         );
         if (nameElements.length > 0) {
-            log(`SUCCESS: Found ${nameElements.length} elements with your name`);
+            log(`✅ Found ${nameElements.length} elements with your name`);
             const nameElement = nameElements[0];
             log(`   Using: ${nameElement.tagName}.${nameElement.className}`);
             return nameElement.closest('[class*="section"], [class*="container"], [class*="wrapper"]') || nameElement.parentElement;
         }
         
-        log('ERROR: No participants list found in current context or iframes');
+        log('❌ No participants list found in current context or iframes');
         return null;
     }
     
     // Parse participant names and camera status from the list
     function parseParticipants(participantsList) {
         if (!participantsList) {
-            log('ERROR: No participants list provided');
+            log('❌ No participants list provided');
         return [];
     }
     
@@ -808,10 +869,10 @@
         log(`   Found ${participantItems.length} unique participant items`);
         
         if (participantItems.length > 0) {
-            log(`SUCCESS: Found ${participantItems.length} participant items, processing...`);
+            log(`✅ Found ${participantItems.length} participant items, processing...`);
             return parseParticipantItems(Array.from(participantItems));
         } else {
-            log('ERROR: No participant items found in list');
+            log('❌ No participant items found in list');
             return [];
         }
     }
@@ -843,7 +904,7 @@
                 return;
             }
             
-            log(`USER: Participant ${index + 1}: ${name} (Camera: ${cameraOn ? '🟢 ON' : '🔴 OFF'})`);
+            log(`👤 Participant ${index + 1}: ${name} (Camera: ${cameraOn ? '🟢 ON' : '🔴 OFF'})`);
             
             participants.push({
                 name: name,
@@ -860,7 +921,7 @@
         // CRITICAL FIX: Check if this is the monitor (extension user) first!
         const ariaLabel = item.getAttribute('aria-label') || '';
         if (ariaLabel.includes('(me)') || ariaLabel.includes('(Host, me)')) {
-            log(`SKIP: Skipping monitor (extension user) - aria-label: "${ariaLabel}"`);
+            log(`⏭️ Skipping monitor (extension user) - aria-label: "${ariaLabel}"`);
             return null; // Return null to skip this participant
         }
         
@@ -908,7 +969,7 @@
             const isOn = ariaLabel.includes('video on') || ariaLabel.includes('camera on');
             
             if (isOff || isOn) {
-                log(`   CAMERA: Camera status from aria-label: "${ariaLabel}" (${isOff ? '🔴 OFF' : '🟢 ON'})`);
+                log(`   📹 Camera status from aria-label: "${ariaLabel}" (${isOff ? '🔴 OFF' : '🟢 ON'})`);
                 return !isOff;
             }
         }
@@ -934,7 +995,7 @@
                 // Convert className to string (handles SVGAnimatedString for SVG elements)
                 const iconClass = String(icon.className || '');
                 const isOff = iconClass.includes('off') || iconClass.includes('muted');
-                log(`   CAMERA: Found camera icon: ${selector} (${isOff ? '🔴 OFF' : '🟢 ON'})`);
+                log(`   📹 Found camera icon: ${selector} (${isOff ? '🔴 OFF' : '🟢 ON'})`);
                 return !isOff; // Return true if NOT off/muted
             }
         }
@@ -946,13 +1007,13 @@
             const isOn = title.includes('video on') || title.includes('camera on');
             
             if (isOff || isOn) {
-                log(`   CAMERA: Camera status from title: "${title}" (${isOff ? '🔴 OFF' : '🟢 ON'})`);
+                log(`   📹 Camera status from title: "${title}" (${isOff ? '🔴 OFF' : '🟢 ON'})`);
                 return !isOff;
             }
         }
         
         // Default: assume camera is ON if we can't determine
-        log('   CAMERA: Camera status unclear, assuming ON');
+        log('   📹 Camera status unclear, assuming ON');
             return true;
     }
     
@@ -967,12 +1028,12 @@
         const hasParticipants = hasParticipantsNow();
         
         if (!inMeeting && !hasParticipants) {
-            log('ERROR: Not in a Zoom meeting and no participants found');
+            log('❌ Not in a Zoom meeting and no participants found');
                     return;
                 }
         
         if (!inMeeting && hasParticipants) {
-            log('WARNING: Meeting detection failed but participants found - continuing monitoring');
+            log('⚠️ Meeting detection failed but participants found - continuing monitoring');
                 }
                 
         // Find and parse participants (only when panel is already open)
@@ -983,14 +1044,14 @@
     
     // Process the found participants
     function processParticipants(participants) {
-        log('STATS: Processing participants...');
+        log('📊 Processing participants...');
                 
                 if (participants.length === 0) {
-            log('ERROR: No participants found');
+            log('❌ No participants found');
                             return;
                         }
                         
-        log(`SUCCESS: Found ${participants.length} participants`);
+        log(`✅ Found ${participants.length} participants`);
                         
         // Update participant tracking and check for warnings
         updateParticipantTracking(participants);
@@ -1002,7 +1063,7 @@
         participants.forEach(participant => {
             // Skip monitor (extension user) in all calculations
             if (participant.name.includes('(me)') || participant.name.includes('(Host, me)')) {
-                log(`SKIP: Excluding monitor from count: ${participant.name}`);
+                log(`⏭️ Excluding monitor from count: ${participant.name}`);
                 return;
             }
             
@@ -1014,7 +1075,7 @@
         
         // Create summary (EXCLUDING monitor)
         const summary = `${actualParticipants} participants (excluding monitor), ${camerasOff} cameras off`;
-        log(`STATS: Summary: ${summary}`);
+        log(`📊 Summary: ${summary}`);
         
         // Store data for popup access
         localStorage.setItem('zoomwatch_summary', summary);
@@ -1044,7 +1105,7 @@
             
             // CRITICAL: Skip the monitor (extension user) - they shouldn't be tracked!
             if (name.includes('(me)') || name.includes('(Host, me)')) {
-                log(`SKIP: Skipping monitor from tracking: ${name}`);
+                log(`⏭️ Skipping monitor from tracking: ${name}`);
                 return;
             }
             
@@ -1054,7 +1115,7 @@
             if (!trackingData) {
                 trackingData = createTrackingData(name);
                 participantTracking.set(name, trackingData);
-                log(`USER: Started tracking participant: ${name}`);
+                log(`👤 Started tracking participant: ${name}`);
             }
             
             // Update camera status and timing
@@ -1063,7 +1124,7 @@
                 if (trackingData.cameraOffStartTime) {
                     const offDuration = currentTime - trackingData.cameraOffStartTime;
                     trackingData.totalOffTime += offDuration;
-                    log(`CAMERA: ${name} turned camera ON after ${Math.round(offDuration/1000)}s`);
+                    log(`📹 ${name} turned camera ON after ${Math.round(offDuration/1000)}s`);
                     
                     // Reset warnings for next time
                     trackingData.warningsSent = {
@@ -1078,7 +1139,7 @@
                 // Camera is off
                 if (!trackingData.cameraOffStartTime) {
                     trackingData.cameraOffStartTime = currentTime;
-                    log(`CAMERA: ${name} turned camera OFF at ${new Date(currentTime).toLocaleTimeString()}`);
+                    log(`📹 ${name} turned camera OFF at ${new Date(currentTime).toLocaleTimeString()}`);
                 }
             }
         });
@@ -1098,14 +1159,14 @@
         const currentTime = Date.now();
         
         // SIMPLIFIED: Extension user IS the monitor - no profile detection needed
-        log('SUCCESS: Extension user is the monitor - proceeding with warnings');
+        log('✅ Extension user is the monitor - proceeding with warnings');
         
         for (const [name, trackingData] of participantTracking) {
             if (!trackingData.cameraOffStartTime) continue; // Camera is on
             
             // DOUBLE-CHECK: Never send warnings to the monitor (extension user)
             if (name.includes('(me)') || name.includes('(Host, me)')) {
-                log(`SKIP: Skipping warning to monitor (extension user): ${name}`);
+                log(`⏭️ Skipping warning to monitor (extension user): ${name}`);
                 continue;
             }
             
@@ -1144,7 +1205,7 @@
         
         // Check if we've already sent this message recently
         if (sentMessages.has(messageId)) {
-            log(`SKIP: Skipping duplicate ${warningLevel} warning to ${participantName} (already sent recently)`);
+            log(`⏭️ Skipping duplicate ${warningLevel} warning to ${participantName} (already sent recently)`);
             return;
         }
         
@@ -1152,7 +1213,7 @@
         const lastTime = lastMessageTime.get(participantName);
         const now = Date.now();
         if (lastTime && (now - lastTime) < messageCooldown) {
-            log(`SKIP: Skipping message to ${participantName} (sent message ${Math.round((now - lastTime) / 1000)}s ago)`);
+            log(`⏭️ Skipping message to ${participantName} (sent message ${Math.round((now - lastTime) / 1000)}s ago)`);
             return;
         }
         
@@ -1161,12 +1222,12 @@
         for (const element of participantElements) {
             const ariaLabel = element.getAttribute('aria-label') || '';
             if (ariaLabel.includes(participantName) && ariaLabel.includes('Host, me')) {
-                log(`SKIP: Skipping message to ${participantName} (is the host)`);
+                log(`⏭️ Skipping message to ${participantName} (is the host)`);
                 return;
             }
         }
         
-        log(`WARNING: Sending ${warningLevel} warning to ${participantName} (camera off for ${durationSeconds}s)`);
+        log(`🚨 Sending ${warningLevel} warning to ${participantName} (camera off for ${durationSeconds}s)`);
         
         // Customize message with participant name and duration
         let message = warningConfig.message;
@@ -1174,11 +1235,11 @@
             message = `Your camera has been off for ${durationSeconds} seconds. You have 20 seconds to turn it on or you'll be moved to a private room with a mentor.`;
         }
         
-        log(`SEND: Attempting to send message: "${message}" to ${participantName}`);
+        log(`📤 Attempting to send message: "${message}" to ${participantName}`);
         const success = await sendChatMessage(message, participantName);
         
         if (success) {
-            log(`SUCCESS: ${warningLevel} warning sent successfully to ${participantName}`);
+            log(`✅ ${warningLevel} warning sent successfully to ${participantName}`);
             
             // Add to sent messages to prevent duplicates
             sentMessages.add(messageId);
@@ -1204,10 +1265,10 @@
                     // Ignore errors if popup is closed
                 });
             } catch (error) {
-                log(`ERROR: Error sending warning notification: ${error.message}`);
+                log(`❌ Error sending warning notification: ${error.message}`);
             }
         } else {
-            log(`ERROR: Failed to send ${warningLevel} warning to ${participantName}`);
+            log(`❌ Failed to send ${warningLevel} warning to ${participantName}`);
         }
         
         // Handle Level 3 private room functionality (placeholder)
@@ -1240,7 +1301,7 @@
                 // Ignore errors if popup is closed
             });
         } catch (error) {
-            log(`ERROR: Error sending private room request: ${error.message}`);
+            log(`❌ Error sending private room request: ${error.message}`);
         }
     }
     
@@ -1259,7 +1320,7 @@
                 // Ignore errors if popup is closed
             });
         } catch (error) {
-            log(`ERROR: Error sending data to popup: ${error.message}`);
+            log(`❌ Error sending data to popup: ${error.message}`);
         }
     }
     
@@ -1270,7 +1331,7 @@
             return; // Too soon for another reminder
         }
         
-        log(`ALERT: Sending reminder: ${camerasOff} cameras are off`);
+        log(`🔔 Sending reminder: ${camerasOff} cameras are off`);
         lastReminderTime = now;
         
         // Send reminder message
@@ -1286,32 +1347,32 @@
                 // Ignore errors
             });
         } catch (error) {
-            log(`ERROR: Error sending reminder: ${error.message}`);
+            log(`❌ Error sending reminder: ${error.message}`);
         }
     }
     
     // Start monitoring
     async function startMonitoring() {
         if (isMonitoring) {
-            log('WARNING: Already monitoring');
+            log('⚠️ Already monitoring');
             return;
         }
         
         // Prevent multiple instances from running in different iframes
         if (isIframe && !window.location.href.includes('/wc/')) {
-            log('WARNING: Skipping monitoring in non-meeting iframe');
+            log('⚠️ Skipping monitoring in non-meeting iframe');
             return;
         }
         
         // Check if monitoring is already started globally
         if (window.ZoomWatchMonitoringStarted) {
-            log('WARNING: Monitoring already started globally - skipping');
+            log('⚠️ Monitoring already started globally - skipping');
             return;
         }
         
         // Only allow monitoring in the main iframe (not in dashboard iframes)
         if (isIframe && window.location.href.includes('/wb/embed/dashboard')) {
-            log('WARNING: Skipping monitoring in dashboard iframe');
+            log('⚠️ Skipping monitoring in dashboard iframe');
             return;
         }
         
@@ -1323,7 +1384,7 @@
             const waitInterval = setInterval(async () => {
                 attempts++;
                 if (hasParticipantsNow()) {
-                    log('SUCCESS: Participants found! Starting monitoring...');
+                    log('✅ Participants found! Starting monitoring...');
                     clearInterval(waitInterval);
                     
                     // Open panels before starting monitoring
@@ -1340,7 +1401,7 @@
                         }
                     }, config.checkInterval);
                 } else if (attempts >= 10) { // 5 seconds (10 * 500ms)
-                    log('SKIP: No participants found after waiting, but opening panels anyway...');
+                    log('⏭️ No participants found after waiting, but opening panels anyway...');
                     clearInterval(waitInterval);
                     
                     // Open panels even if no participants found yet
@@ -1389,11 +1450,11 @@
     
     // Open panels for monitoring
     async function openPanelsForMonitoring() {
-        log('OPEN: Opening panels for monitoring...');
+        log('🔓 Opening panels for monitoring...');
         
         // ENHANCED: Check if we're in main frame and need to look in iframes
         if (window === window.top) {
-            log('INFO: Main frame detected, checking iframes for meeting interface...');
+            log('🔍 Main frame detected, checking iframes for meeting interface...');
             const iframes = document.querySelectorAll('iframe');
             
             for (let i = 0; i < iframes.length; i++) {
@@ -1403,39 +1464,39 @@
                     
                     // Check if this iframe contains the meeting
                     if (iframeUrl.includes('/wc/') && iframeUrl.includes('/start')) {
-                        log(`SUCCESS: Found meeting iframe ${i + 1}: ${iframeUrl}`);
+                        log(`✅ Found meeting iframe ${i + 1}: ${iframeUrl}`);
                         
                         // Try to open panels in this iframe
                         const iframeZoomWatch = iframes[i].contentWindow.ZoomWatch;
                         if (iframeZoomWatch && iframeZoomWatch.openPanelsForMonitoring) {
-                            log(`TARGET: Calling openPanelsForMonitoring in iframe ${i + 1}`);
+                            log(`🎯 Calling openPanelsForMonitoring in iframe ${i + 1}`);
                             const result = await iframeZoomWatch.openPanelsForMonitoring();
                             if (result) {
-                                log(`SUCCESS: Successfully opened panels in iframe ${i + 1}`);
+                                log(`✅ Successfully opened panels in iframe ${i + 1}`);
                                 return true;
                             }
                         }
                     }
                 } catch (e) {
-                    log(`WARNING: Could not access iframe ${i + 1}: ${e.message}`);
+                    log(`⚠️ Could not access iframe ${i + 1}: ${e.message}`);
                 }
             }
             
-            log('WARNING: No meeting iframes found or panels could not be opened in iframes');
+            log('⚠️ No meeting iframes found or panels could not be opened in iframes');
         }
         
         // Fallback: Try to open panels in current context
-        log('INFO: Attempting to open panels in current context...');
+        log('🔍 Attempting to open panels in current context...');
         
         let panelsOpened = 0;
         
         // Try to open participants panel
         const participantsOpened = openParticipantsPanel();
         if (participantsOpened) {
-            log('SUCCESS: Participants panel opened for monitoring');
+            log('✅ Participants panel opened for monitoring');
             panelsOpened++;
         } else {
-            log('WARNING: Could not open participants panel - may already be open');
+            log('⚠️ Could not open participants panel - may already be open');
         }
         
         // Wait a moment for panels to open
@@ -1444,17 +1505,17 @@
         // Try to open chat panel
         const chatOpened = openChatPanel();
         if (chatOpened) {
-            log('SUCCESS: Chat panel opened for monitoring');
+            log('✅ Chat panel opened for monitoring');
             panelsOpened++;
         } else {
-            log('WARNING: Could not open chat panel - may already be open');
+            log('⚠️ Could not open chat panel - may already be open');
         }
         
         // Wait a moment for chat panel to fully load
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         if (panelsOpened > 0) {
-            log(`SUCCESS: Successfully opened ${panelsOpened} panels for monitoring`);
+            log(`✅ Successfully opened ${panelsOpened} panels for monitoring`);
         } else {
             log('ℹ️ Panels may already be open or not available in this context');
         }
@@ -1535,14 +1596,59 @@
     }
     
     // Debug meeting detection
-
+    function debugMeetingDetection() {
+        log('🔍 === DEBUGGING MEETING DETECTION ===');
+        
+        const url = window.location.href;
+        log(`🔍 Current URL: ${url}`);
+        
+        // Test isInZoomMeeting
+        const inMeeting = isInZoomMeeting();
+        log(`🔍 isInZoomMeeting(): ${inMeeting}`);
+        
+        // Test hasParticipantsNow
+        const hasParticipants = hasParticipantsNow();
+        log(`🔍 hasParticipantsNow(): ${hasParticipants}`);
+        
+        // Test if we're in an iframe
+        log(`🔍 isIframe: ${isIframe}`);
+        
+        // Show all elements that might indicate a meeting
+        const meetingElements = document.querySelectorAll('[class*="meeting"], [class*="participant"], [class*="chat"], [class*="footer"], video');
+        log(`🔍 Found ${meetingElements.length} meeting-related elements:`);
+        meetingElements.forEach((el, i) => {
+            if (i < 10) { // Limit to first 10
+                const className = el.className || '';
+                const tagName = el.tagName;
+                const visible = el.offsetWidth > 0 && el.offsetHeight > 0;
+                log(`  ${i + 1}: ${tagName}.${className.substring(0, 50)} | visible: ${visible}`);
+            }
+        });
+        
+        // Test monitoring logic
+        log(`🔍 Monitoring should continue: ${inMeeting || hasParticipants}`);
+        
+        log('=== END MEETING DETECTION DEBUG ===');
+    }
     
-
-
+    // Debug recipient selection
+    function debugRecipientSelection() {
+        log('👤 === DEBUGGING RECIPIENT SELECTION ===');
+        
+        // Find the "Everyone" dropdown button
+        const everyoneButton = document.querySelector('button[aria-label*="Everyone"], .chat-receiver-list__receiver, [class*="chat-receiver"]');
+        if (everyoneButton) {
+            log(`✅ Found Everyone button: ${everyoneButton.outerHTML.substring(0, 200)}`);
+            log(`   Aria-label: "${everyoneButton.getAttribute('aria-label')}"`);
+            log(`   Text content: "${everyoneButton.textContent}"`);
+            log(`   Class: "${everyoneButton.className}"`);
+        } else {
+            log('❌ Everyone button not found');
+        }
         
         // Show all potential recipient options
         const recipientOptions = document.querySelectorAll('[role="option"], [class*="chat-receiver"], [class*="participant"], [class*="dropdown"]');
-        log(`INFO: Found ${recipientOptions.length} potential recipient options:`);
+        log(`🔍 Found ${recipientOptions.length} potential recipient options:`);
         recipientOptions.forEach((option, i) => {
             if (i < 10) { // Limit to first 10
                 const text = option.textContent || '';
@@ -1556,23 +1662,23 @@
         // Show current chat input state
         const chatInput = findChatInput();
         if (chatInput) {
-            log(`SUCCESS: Chat input found: ${chatInput.tagName}.${chatInput.className}`);
+            log(`✅ Chat input found: ${chatInput.tagName}.${chatInput.className}`);
             log(`   Value: "${chatInput.value || chatInput.textContent}"`);
         } else {
-            log('ERROR: Chat input not found');
+            log('❌ Chat input not found');
         }
         
         // Show current recipient display
         const recipientDisplay = document.querySelector('[aria-label*="Everyone"], .chat-receiver-list__receiver, [class*="chat-receiver"]');
         if (recipientDisplay) {
-            log(`SEND: Current recipient display: "${recipientDisplay.textContent}"`);
+            log(`📤 Current recipient display: "${recipientDisplay.textContent}"`);
         } else {
-            log('ERROR: No recipient display found');
+            log('❌ No recipient display found');
         }
         
         // Show all participant elements that could be clicked
         const participantElements = document.querySelectorAll('[class*="participant"], [class*="attendee"], [role="listitem"]');
-        log(`PARTICIPANTS: Found ${participantElements.length} participant elements that could be clicked:`);
+        log(`👥 Found ${participantElements.length} participant elements that could be clicked:`);
         participantElements.forEach((element, i) => {
             if (i < 10) { // Limit to first 10
                 const text = element.textContent || '';
@@ -1584,11 +1690,22 @@
         log('=== END RECIPIENT SELECTION DEBUG ===');
     }
     
-
+    // Debug message deduplication
+    function debugMessageDeduplication() {
+        log('📨 === DEBUGGING MESSAGE DEDUPLICATION ===');
+        log(`📨 Sent messages cache: ${Array.from(sentMessages).join(', ')}`);
+        log(`📨 Last message times:`);
+        for (const [participant, time] of lastMessageTime.entries()) {
+            const secondsAgo = Math.round((Date.now() - time) / 1000);
+            log(`  ${participant}: ${secondsAgo}s ago`);
+        }
+        log(`📨 Message cooldown: ${messageCooldown / 1000}s`);
+        log('=== END MESSAGE DEDUPLICATION DEBUG ===');
+    }
     
     // Check if chat panel is currently open
     function isChatPanelOpen() {
-        log('Checking if chat panel is open...');
+        log('🔍 Checking if chat panel is open...');
         
         // Look for chat panel indicators with more specific Zoom selectors
         const chatPanelSelectors = [
@@ -1609,7 +1726,7 @@
         for (const selector of chatPanelSelectors) {
             const element = document.querySelector(selector);
             if (element) {
-                log(`SUCCESS: Found chat panel with selector: ${selector}`);
+                log(`✅ Found chat panel with selector: ${selector}`);
                 log(`   Element: ${element.outerHTML.substring(0, 150)}...`);
                 return true;
             }
@@ -1631,7 +1748,7 @@
         for (const selector of chatInputSelectors) {
             const chatInput = document.querySelector(selector);
             if (chatInput) {
-                log(`SUCCESS: Found chat input field with selector: ${selector}`);
+                log(`✅ Found chat input field with selector: ${selector}`);
                 log(`   Input element: ${chatInput.outerHTML.substring(0, 100)}...`);
                 return true;
             }
@@ -1650,7 +1767,7 @@
         for (const selector of recipientSelectors) {
             const recipientText = document.querySelector(selector);
             if (recipientText && recipientText.textContent?.includes('to:')) {
-                log(`SUCCESS: Found recipient selector with selector: ${selector}`);
+                log(`✅ Found recipient selector with selector: ${selector}`);
                 log(`   Recipient text: "${recipientText.textContent}"`);
                 return true;
             }
@@ -1669,7 +1786,7 @@
             for (const element of elements) {
                 const text = element.textContent?.trim() || '';
                 if (text.toLowerCase().includes('meeting chat') || text.toLowerCase().includes('chat')) {
-                    log(`SUCCESS: Found chat title with selector: ${selector}`);
+                    log(`✅ Found chat title with selector: ${selector}`);
                     log(`   Title text: "${text}"`);
                     return true;
                 }
@@ -1677,7 +1794,7 @@
         }
         
         // Debug: log what we found
-        log('INFO: Debug: Checking all elements with "chat" in class or text...');
+        log('🔍 Debug: Checking all elements with "chat" in class or text...');
         const allElements = document.querySelectorAll('*');
         let chatElements = [];
         
@@ -1699,40 +1816,40 @@
         }
         
         if (chatElements.length > 0) {
-            log(`INFO: Found ${chatElements.length} elements with "chat" references:`);
+            log(`🔍 Found ${chatElements.length} elements with "chat" references:`);
             chatElements.slice(0, 10).forEach((elem, i) => {
                 log(`   ${i + 1}: ${elem.tag}.${elem.class} | "${elem.text}" | aria: "${elem.ariaLabel}"`);
             });
         }
         
-        log('ERROR: Chat panel not detected as open');
+        log('❌ Chat panel not detected as open');
         return false;
     }
     
     // Debug participant selector in chat
     async function debugParticipantSelector() {
-        log(`INFO: === DEBUGGING PARTICIPANT SELECTOR ===`);
+        log(`🔍 === DEBUGGING PARTICIPANT SELECTOR ===`);
         
         // Check current iframe context
         const isIframe = window !== window.top;
-        log(`LOCATION: Current context: ${isIframe ? 'IFRAME' : 'MAIN'} - URL: ${window.location.href}`);
+        log(`📍 Current context: ${isIframe ? 'IFRAME' : 'MAIN'} - URL: ${window.location.href}`);
         
         // First, check if chat panel is already open, or try to open it
         const chatPanelOpen = isChatPanelOpen();
         if (!chatPanelOpen) {
-            log('CHAT: Chat panel not open, attempting to open...');
+            log('💬 Chat panel not open, attempting to open...');
             if (!openChatPanel()) {
-                log('ERROR: Cannot debug: Chat panel not open');
+                log('❌ Cannot debug: Chat panel not open');
                 return false;
             }
         } else {
-            log('SUCCESS: Chat panel already open, proceeding with debug...');
+            log('✅ Chat panel already open, proceeding with debug...');
         }
         
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         // Find the "Everyone" dropdown button with comprehensive Zoom selectors
-        log('INFO: Looking for recipient selector button...');
+        log('🔍 Looking for recipient selector button...');
         
         const everyoneButtonSelectors = [
             // Original selectors
@@ -1781,7 +1898,7 @@
                     if (className.includes('avatar') || className.includes('profile') || 
                         ariaLabel.includes('avatar') || ariaLabel.includes('profile') ||
                         title.includes('avatar') || title.includes('profile')) {
-                        log(`SKIP: Skipping avatar/profile button: ${selector}`);
+                        log(`⏭️ Skipping avatar/profile button: ${selector}`);
                         continue;
                     }
                     
@@ -1797,17 +1914,17 @@
                                           button.getAttribute('tabindex') !== null;
                         
                         if (isClickable) {
-                            log(`SUCCESS: Found clickable chat-related button with selector: ${selector}`);
+                            log(`✅ Found clickable chat-related button with selector: ${selector}`);
                             everyoneButton = button;
                             foundSelector = selector;
                             break;
                         } else {
-                            log(`SKIP: Found chat-related element but not clickable: ${selector}`);
+                            log(`⏭️ Found chat-related element but not clickable: ${selector}`);
                             // Continue searching for a clickable one
                             continue;
                         }
                     } else {
-                        log(`SKIP: Found button but not clearly chat-related: ${selector}`);
+                        log(`⏭️ Found button but not clearly chat-related: ${selector}`);
                         // Keep as fallback but continue searching
                         if (!everyoneButton) {
                             everyoneButton = button;
@@ -1823,7 +1940,7 @@
         
         // If no button found, try searching by text content in main frame and iframes
         if (!everyoneButton) {
-            log('INFO: No button found with selectors, searching by text content...');
+            log('🔍 No button found with selectors, searching by text content...');
             
             // Search in main frame first
             const mainFrameElements = document.querySelectorAll('*');
@@ -1836,7 +1953,7 @@
                 
                 if ((text.includes('to:') || text.includes('Everyone')) && 
                     (className.includes('chat') || className.includes('receiver') || className.includes('recipient'))) {
-                    log(`SUCCESS: Found potential recipient element in main frame: "${text}"`);
+                    log(`✅ Found potential recipient element in main frame: "${text}"`);
                     log(`   Element: ${element.outerHTML.substring(0, 200)}...`);
                     
                     // Check if it's clickable
@@ -1851,7 +1968,7 @@
             
             // If not found in main frame, search in iframes
             if (!foundInMain) {
-                log('INFO: Not found in main frame, searching iframes for recipient button...');
+                log('🔍 Not found in main frame, searching iframes for recipient button...');
                 const allIframes = document.querySelectorAll('iframe');
                 
                 for (let i = 0; i < allIframes.length; i++) {
@@ -1867,7 +1984,7 @@
                             
                             // Look for elements containing "to:" OR "Everyone" (relaxed criteria)
                             if (text.includes('to:') || text.includes('Everyone')) {
-                                log(`SUCCESS: Found potential recipient element in iframe ${i + 1}: "${text}"`);
+                                log(`✅ Found potential recipient element in iframe ${i + 1}: "${text}"`);
                                 log(`   Element: ${element.outerHTML.substring(0, 200)}...`);
                                 
                                 // Check if it's clickable - more lenient validation
@@ -1880,13 +1997,13 @@
                                                    element.classList.contains('dropup');
                                 
                                 if (isClickable) {
-                                    log(`SUCCESS: Recipient button is clickable in iframe ${i + 1}`);
+                                    log(`✅ Recipient button is clickable in iframe ${i + 1}`);
                                     log(`   Clickability: tag=${element.tagName}, role=${element.getAttribute('role')}, tabindex=${element.getAttribute('tabindex')}, aria-haspopup=${element.getAttribute('aria-haspopup')}`);
                                     everyoneButton = element;
                                     foundSelector = `iframe-${i + 1}-text-search`;
                                     break;
                                 } else {
-                                    log(`SKIP: Element found but not clickable: tag=${element.tagName}, role=${element.getAttribute('role')}, tabindex=${element.getAttribute('tabindex')}`);
+                                    log(`⏭️ Element found but not clickable: tag=${element.tagName}, role=${element.getAttribute('role')}, tabindex=${element.getAttribute('tabindex')}`);
                                 }
                             }
                         }
@@ -1901,8 +2018,8 @@
         }
         
         if (!everyoneButton) {
-            log('ERROR: Everyone button not found with any selector');
-            log('INFO: Debug: Showing all elements with "to:" or "Everyone" text...');
+            log('❌ Everyone button not found with any selector');
+            log('🔍 Debug: Showing all elements with "to:" or "Everyone" text...');
             
             const allElements = document.querySelectorAll('*');
             let relevantElements = [];
@@ -1921,7 +2038,7 @@
             }
             
             if (relevantElements.length > 0) {
-                log(`INFO: Found ${relevantElements.length} elements with relevant text:`);
+                log(`🔍 Found ${relevantElements.length} elements with relevant text:`);
                 relevantElements.slice(0, 10).forEach((elem, i) => {
                     log(`   ${i + 1}: ${elem.tag}.${elem.class} | "${elem.text}" | aria: "${elem.ariaLabel}" | visible: ${elem.visible}`);
                 });
@@ -1930,15 +2047,15 @@
             return false;
         }
         
-        log(`SUCCESS: Found Everyone button with selector: ${foundSelector}`);
+        log(`✅ Found Everyone button with selector: ${foundSelector}`);
         log(`   Button element: ${everyoneButton.outerHTML.substring(0, 200)}...`);
         
-        log(`SUCCESS: Found Everyone button: ${everyoneButton.ariaLabel || 'no aria-label'}`);
+        log(`✅ Found Everyone button: ${everyoneButton.ariaLabel || 'no aria-label'}`);
         log(`   Button element: ${everyoneButton.outerHTML.substring(0, 200)}...`);
         
         // Click the Everyone button
         everyoneButton.click();
-        log('SUCCESS: Clicked Everyone dropdown');
+        log('✅ Clicked Everyone dropdown');
         
         // Wait longer for dropdown to fully populate
         log('⏳ Waiting for dropdown to populate...');
@@ -1946,7 +2063,7 @@
         
         // ENHANCED SEARCH: Look for dropdown options in current context
         const dropdownOptions = document.querySelectorAll('[role="option"], [role="menuitem"], .dropdown-item, [class*="dropdown"], [class*="dropup"], [class*="menu-item"], [class*="list-item"]');
-        log(`INFO: Found ${dropdownOptions.length} dropdown options in current context`);
+        log(`🔍 Found ${dropdownOptions.length} dropdown options in current context`);
         
         for (let i = 0; i < dropdownOptions.length; i++) {
             const option = dropdownOptions[i];
@@ -1956,9 +2073,9 @@
         }
         
         // Also search specifically for participant-related elements
-        log('INFO: Searching for participant-specific elements in current context...');
+        log('🔍 Searching for participant-specific elements in current context...');
         const participantElements = document.querySelectorAll('[class*="participant"], [class*="user"], [class*="member"], [class*="attendee"], [class*="receiver"]');
-        log(`INFO: Found ${participantElements.length} participant-related elements in current context`);
+        log(`🔍 Found ${participantElements.length} participant-related elements in current context`);
         
         for (let i = 0; i < participantElements.length; i++) {
             const element = participantElements[i];
@@ -1968,7 +2085,7 @@
         }
         
         // Search for actual participant names that should be in the dropdown
-        log('INFO: Searching for actual participant names in dropdown...');
+        log('🔍 Searching for actual participant names in dropdown...');
         const allTextElements = document.querySelectorAll('*');
         let participantNames = [];
         
@@ -1988,14 +2105,14 @@
         }
         
         if (participantNames.length > 0) {
-            log(`INFO: Found ${participantNames.length} potential participant names:`);
+            log(`🔍 Found ${participantNames.length} potential participant names:`);
             participantNames.forEach((name, i) => {
                 log(`   Name ${i + 1}: "${name.text}" (${name.tag}.${name.class} | aria: "${name.ariaLabel}")`);
             });
         }
         
         // Check if dropdown opened in a different iframe
-        log('INFO: Checking all iframes for dropdown options...');
+        log('🔍 Checking all iframes for dropdown options...');
         const allIframes = document.querySelectorAll('iframe');
         log(`Found ${allIframes.length} iframes`);
         
@@ -2015,7 +2132,7 @@
                 }
                 
                 // ENHANCED: Search for actual participant names in this iframe
-                log(`   INFO: Searching iframe ${i + 1} for participant names...`);
+                log(`   🔍 Searching iframe ${i + 1} for participant names...`);
                 
                 // Search in multiple ways for the actual recipient dropdown items
                 const searchSelectors = [
@@ -2053,7 +2170,7 @@
                     '[class*="chat-receiver-list__menu"]', '[class*="chat-receiver-list__menu-item"]'
                 ];
                 
-                log(`   INFO: Looking for recipient dropdown containers...`);
+                log(`   🔍 Looking for recipient dropdown containers...`);
                 for (const selector of recipientDropdownSelectors) {
                     const elements = iframeDoc.querySelectorAll(selector);
                     elements.forEach(el => {
@@ -2063,13 +2180,13 @@
                         const hasDropdownClass = el.className.includes('dropdown') || el.className.includes('menu');
                         
                         if (isVisible && hasDropdownClass) {
-                            log(`   TARGET: Found potential dropdown container: ${el.tagName}.${el.className}`);
+                            log(`   🎯 Found potential dropdown container: ${el.tagName}.${el.className}`);
                             allElements.add(el);
                             
                             // Look inside this dropdown for participant names
                             const dropdownItems = el.querySelectorAll('[class*="menu-item"], [class*="dropdown-item"], [role="menuitem"], [role="menuitemradio"]');
                             if (dropdownItems.length > 0) {
-                                log(`   INFO: Found ${dropdownItems.length} items in dropdown container`);
+                                log(`   🔍 Found ${dropdownItems.length} items in dropdown container`);
                                 dropdownItems.forEach((item, idx) => {
                                     const text = item.textContent?.trim() || '';
                                     const className = item.className || '';
@@ -2106,13 +2223,13 @@
                 
                 // CRITICAL: After processing, look specifically for the recipient dropdown items
                 // that should contain "Everyone in Meeting" and "Abhi 2"
-                log(`   INFO: Looking for recipient dropdown items specifically...`);
+                log(`   🔍 Looking for recipient dropdown items specifically...`);
                 
                 // ENHANCED: Look for the exact dropdown structure from your screenshot
-                log(`   TARGET: ENHANCED SEARCH: Looking for chat-receiver-list__menu-item elements...`);
+                log(`   🎯 ENHANCED SEARCH: Looking for chat-receiver-list__menu-item elements...`);
                 const chatReceiverItems = iframeDoc.querySelectorAll('[class*="chat-receiver-list__menu-item"]');
                 if (chatReceiverItems.length > 0) {
-                    log(`   SUCCESS: Found ${chatReceiverItems.length} chat receiver menu items:`);
+                    log(`   ✅ Found ${chatReceiverItems.length} chat receiver menu items:`);
                     chatReceiverItems.forEach((item, idx) => {
                         const text = item.textContent?.trim() || '';
                         const className = item.className || '';
@@ -2120,11 +2237,11 @@
                         log(`     Chat Receiver ${idx + 1}: "${text}" (${className} | role: ${role})`);
                     });
                 } else {
-                    log(`   ERROR: No chat-receiver-list__menu-item elements found`);
+                    log(`   ❌ No chat-receiver-list__menu-item elements found`);
                 }
                 
                 // TARGETED SEARCH: Look for "Everyone in Meeting" specifically
-                log(`   TARGET: TARGETED SEARCH: Looking for "Everyone in Meeting" text...`);
+                log(`   🎯 TARGETED SEARCH: Looking for "Everyone in Meeting" text...`);
                 const allTargetElements = iframeDoc.querySelectorAll('*');
                 let foundTargetText = [];
                 
@@ -2149,12 +2266,12 @@
                             element: element
                         });
                         
-                        log(`   TARGET: FOUND TARGET TEXT: "${text}" (${tagName}.${className} | role: ${role} | id: ${id})`);
+                        log(`   🎯 FOUND TARGET TEXT: "${text}" (${tagName}.${className} | role: ${role} | id: ${id})`);
                     }
                 }
                 
                 if (foundTargetText.length > 0) {
-                    log(`   SUCCESS: Found ${foundTargetText.length} elements with target text in iframe ${i + 1}:`);
+                    log(`   ✅ Found ${foundTargetText.length} elements with target text in iframe ${i + 1}:`);
                     foundTargetText.forEach((item, idx) => {
                         log(`     Target ${idx + 1}: "${item.text}" (${item.tagName}.${item.class} | role: ${item.role} | id: ${item.id})`);
                         
@@ -2167,11 +2284,11 @@
                                            item.element.getAttribute('tabindex') !== null;
                         
                         if (isClickable) {
-                            log(`       TARGET: CLICKABLE: This element can be clicked!`);
+                            log(`       🎯 CLICKABLE: This element can be clicked!`);
                         }
                     });
                 } else {
-                    log(`   ERROR: No target text found in iframe ${i + 1}`);
+                    log(`   ❌ No target text found in iframe ${i + 1}`);
                 }
                 
                 // Also search for recipient dropdown items with broader selectors
@@ -2195,21 +2312,21 @@
                             element: item
                         });
                         
-                        log(`   TARGET: FOUND RECIPIENT ITEM: "${text}" (${className} | role: ${role})`);
+                        log(`   🎯 FOUND RECIPIENT ITEM: "${text}" (${className} | role: ${role})`);
                     }
                 }
                 
                 if (foundRecipientItems.length > 0) {
-                    log(`   SUCCESS: Found ${foundRecipientItems.length} recipient dropdown items in iframe ${i + 1}:`);
+                    log(`   ✅ Found ${foundRecipientItems.length} recipient dropdown items in iframe ${i + 1}:`);
                     foundRecipientItems.forEach((item, idx) => {
                         log(`     Recipient Item ${idx + 1}: "${item.text}" (${item.class} | role: ${item.role})`);
                     });
                 } else {
-                    log(`   ERROR: No recipient dropdown items found in iframe ${i + 1}`);
+                    log(`   ❌ No recipient dropdown items found in iframe ${i + 1}`);
                 }
                 
                 if (foundParticipants.length > 0) {
-                    log(`   SUCCESS: Found ${foundParticipants.length} potential participant names in iframe ${i + 1}:`);
+                    log(`   ✅ Found ${foundParticipants.length} potential participant names in iframe ${i + 1}:`);
                     foundParticipants.forEach((participant, idx) => {
                         log(`     Participant ${idx + 1}: "${participant.text}" (${participant.tagName}.${participant.class} | aria: "${participant.ariaLabel}")`);
                         
@@ -2222,7 +2339,7 @@
                                            participant.element.getAttribute('tabindex') !== null;
                         
                         if (isClickable) {
-                            log(`       TARGET: CLICKABLE: This element can be clicked!`);
+                            log(`       🎯 CLICKABLE: This element can be clicked!`);
                         }
                     });
                 }
@@ -2247,14 +2364,14 @@
             }
         }
         
-        log('INFO: === END PARTICIPANT SELECTOR DEBUG ===');
+        log('🔍 === END PARTICIPANT SELECTOR DEBUG ===');
         return true;
     }
     
     // Debug host detection
     function debugHostDetection() {
-        log('INFO: === DEBUGGING HOST DETECTION ===');
-        log(`SUCCESS: Extension user is the monitor`);
+        log('🔍 === DEBUGGING HOST DETECTION ===');
+        log(`✅ Extension user is the monitor`);
         
         const allParticipantElements = document.querySelectorAll('[class*="participant"], [class*="attendee"]');
         log(`Found ${allParticipantElements.length} participant elements:`);
@@ -2265,16 +2382,16 @@
             log(`  Element: "${text.substring(0, 50)}..." | aria-label: "${ariaLabel}"`);
             
             if (ariaLabel.includes('Host, me')) {
-                log(`  SUCCESS: FOUND HOST: "${ariaLabel}"`);
+                log(`  ✅ FOUND HOST: "${ariaLabel}"`);
             }
         }
         
-        log('INFO: === END HOST DETECTION DEBUG ===');
+        log('🔍 === END HOST DETECTION DEBUG ===');
     }
     
     // Stop monitoring
     function stopMonitoring() {
-        log('STOP: STOPPING PARTICIPANT MONITORING...');
+        log('⏹️ STOPPING PARTICIPANT MONITORING...');
         isMonitoring = false;
         isPaused = false;
         
@@ -2284,18 +2401,18 @@
         // Clear message cache when stopping
         sentMessages.clear();
         lastMessageTime.clear();
-        log('CLEAN: Cleared message cache');
+        log('🧹 Cleared message cache');
     }
     
     // Pause monitoring
     function pauseMonitoring() {
-        log('PAUSE: PAUSING PARTICIPANT MONITORING...');
+        log('⏸️ PAUSING PARTICIPANT MONITORING...');
         isPaused = true;
     }
     
     // Resume monitoring
     function resumeMonitoring() {
-        log('RESUME: RESUMING PARTICIPANT MONITORING...');
+        log('▶️ RESUMING PARTICIPANT MONITORING...');
         isPaused = false;
     }
         
@@ -2307,7 +2424,7 @@
         // Only the top frame handles popup-triggered actions
         if (window !== window.top) return;
         
-        log(`MESSAGE: [TOP FRAME] Received message: ${message.action}`);
+        log(`📨 [TOP FRAME] Received message: ${message.action}`);
         
         try {
         switch (message.action) {
@@ -2402,22 +2519,22 @@
                 break;
                 
             case 'debugParticipantSelector':
-                log('INFO: DEBUG: About to call debugParticipantSelector');
+                log('🔍 DEBUG: About to call debugParticipantSelector');
                 (async () => {
                     try {
-                        log('INFO: DEBUG: Function exists, calling it...');
-                        log('INFO: DEBUG: Function type: ' + typeof debugParticipantSelector);
+                        log('🔍 DEBUG: Function exists, calling it...');
+                        log('🔍 DEBUG: Function type: ' + typeof debugParticipantSelector);
                         if (typeof debugParticipantSelector === 'function') {
                             const result = await debugParticipantSelector();
-                            log(`INFO: DEBUG: debugParticipantSelector returned: ${result}`);
+                            log(`🔍 DEBUG: debugParticipantSelector returned: ${result}`);
                             sendResponse({ success: true, message: 'Participant selector debug complete - check console' });
                         } else {
-                            log('ERROR: ERROR: debugParticipantSelector is not a function');
+                            log('❌ ERROR: debugParticipantSelector is not a function');
                             sendResponse({ success: false, message: 'Function not found' });
                         }
                     } catch (error) {
-                        log(`ERROR: ERROR calling debugParticipantSelector: ${error.message}`);
-                        log(`ERROR: ERROR stack: ${error.stack}`);
+                        log(`❌ ERROR calling debugParticipantSelector: ${error.message}`);
+                        log(`❌ ERROR stack: ${error.stack}`);
                         sendResponse({ success: false, message: `Error: ${error.message}` });
                     }
                 })();
@@ -2449,7 +2566,7 @@
                 break;
                 
             case 'testChatMessage':
-                log('TEST: Testing chat message functionality...');
+                log('🧪 Testing chat message functionality...');
                 (async () => {
                     const testSuccess = await sendChatMessage(
                         message.data?.message || 'Test message from ZoomWatch', 
@@ -2462,7 +2579,7 @@
                 
             case 'toggleAutoWarnings':
                 config.enableAutoWarnings = !config.enableAutoWarnings;
-                log(`ALERT: Auto-warnings ${config.enableAutoWarnings ? 'enabled' : 'disabled'}`);
+                log(`🔔 Auto-warnings ${config.enableAutoWarnings ? 'enabled' : 'disabled'}`);
                 sendResponse({ success: true, enabled: config.enableAutoWarnings });
                 break;
                 
@@ -2491,23 +2608,107 @@
                 break;
                 
             case 'testSimple':
-                log('TEST: TEST: Simple test case working');
+                log('🧪 TEST: Simple test case working');
                 sendResponse({ success: true, message: 'Simple test working' });
                 break;
                 
             default:
-                log(`ERROR: Unknown action: ${message.action}`);
+                log(`❌ Unknown action: ${message.action}`);
                 sendResponse({ success: false, message: 'Unknown action' });
         }
         } catch (e) {
-            log(`ERROR: Handler error: ${e.message}`);
+            log(`❌ Handler error: ${e.message}`);
             sendResponse({ success: false, message: `Handler error: ${e.message}` });
         }
         
         return true; // Keep message channel open
     });
     
-
+    // Make functions available globally for debugging
+    
+    // Simple global function for testing
+    window.startClickTracking = function() {
+        console.log('🔍 Starting click tracking manually...');
+        addClickTracking();
+    };
+    
+    // Test function to verify extension is loaded
+    window.testZoomWatch = function() {
+        console.log('🧪 ZoomWatch extension test - Extension is loaded and working!');
+        console.log('📊 Current config:', config);
+        console.log('🔍 Is in meeting:', isInZoomMeeting());
+        return 'ZoomWatch extension is working!';
+    };
+    
+    // Debug function to see what's available
+    window.debugZoomWatch = function() {
+        console.log('🔍 Debugging ZoomWatch...');
+        console.log('Window functions:', Object.keys(window).filter(key => key.includes('Zoom') || key.includes('start') || key.includes('test')));
+        console.log('ZoomWatch object:', window.ZoomWatch);
+        console.log('startClickTracking function:', typeof window.startClickTracking);
+        console.log('testZoomWatch function:', typeof window.testZoomWatch);
+        console.log('addClickTracking function:', typeof addClickTracking);
+        console.log('isInZoomMeeting function:', typeof isInZoomMeeting);
+    };
+    
+    // Try multiple ways to expose functions
+    try {
+        // Method 1: Direct window assignment
+        window.startClickTracking2 = addClickTracking;
+        window.testZoomWatch2 = function() {
+            return testZoomWatch();
+        };
+        
+        // Method 2: Using Object.defineProperty
+        Object.defineProperty(window, 'startClickTracking3', {
+            value: addClickTracking,
+            writable: true,
+            configurable: true
+        });
+        
+        // Method 3: eval removed due to CSP restrictions
+        console.log('⚠️ eval method skipped due to CSP restrictions');
+        
+        console.log('🔍 Multiple exposure methods attempted');
+        console.log('startClickTracking2:', typeof window.startClickTracking2);
+        console.log('startClickTracking3:', typeof window.startClickTracking3);
+        console.log('startClickTracking4:', typeof window.startClickTracking4);
+    } catch (e) {
+        console.log('❌ Error with multiple exposure methods:', e.message);
+    }
+    
+    // Immediate test to see if functions are created
+    console.log('🔍 Creating global functions...');
+    console.log('startClickTracking created:', typeof window.startClickTracking);
+    console.log('testZoomWatch created:', typeof window.testZoomWatch);
+    console.log('debugZoomWatch created:', typeof window.debugZoomWatch);
+    
+    // Test if we can call the functions directly
+    try {
+        console.log('🔍 Testing direct function calls...');
+        if (typeof addClickTracking === 'function') {
+            console.log('✅ addClickTracking function exists');
+        } else {
+            console.log('❌ addClickTracking function does not exist');
+        }
+        
+        if (typeof isInZoomMeeting === 'function') {
+            console.log('✅ isInZoomMeeting function exists');
+        } else {
+            console.log('❌ isInZoomMeeting function does not exist');
+        }
+        
+        // Test if debugExtensionContext exists
+        if (typeof debugExtensionContext === 'function') {
+            console.log('✅ debugExtensionContext function exists');
+            // Call it to see the context
+            debugExtensionContext();
+        } else {
+            console.log('❌ debugExtensionContext function does not exist');
+        }
+    } catch (e) {
+        console.log('❌ Error testing functions:', e.message);
+    }
     
     window.ZoomWatch = {
         startMonitoring,
@@ -2527,13 +2728,19 @@
         closeParticipantsPanel,
         openChatPanel,
         closeChatPanel,
-        // Core utility functions
+        // Debug and utility functions
         findChatInput,
         findChatSendButton,
         selectChatRecipient,
         openPanelsForMonitoring,
         forceOpenPanelsForMonitoring,
+        debugMeetingDetection,
+        debugRecipientSelection,
         forceSelectRecipient,
+        debugMessageDeduplication,
+        debugParticipantSelector,
+        debugPanelButtons,
+        debugChatButtons,
         isInZoomMeeting,
         getTrackingData: () => Array.from(participantTracking.entries()),
         getConfig: () => config,
@@ -2550,25 +2757,25 @@
         analyzePanels: () => analyzePanels(),
         interceptZoomEvents: () => interceptZoomEvents(),
         findZoomAPIs: () => findZoomAPIs(),
-
+        startClickTracking: () => startClickTracking(), // Add click tracking function
         version: '3.0.0'
     };
     
     // === ZOOM INTERFACE REVERSE ENGINEERING FUNCTIONS ===
     
     // Simple test that runs immediately
-    console.log('INFO: IMMEDIATE TEST - Script execution started');
+    console.log('🔍 IMMEDIATE TEST - Script execution started');
     console.log('Timestamp:', new Date().toISOString());
     console.log('Window object exists:', typeof window !== 'undefined');
     console.log('Document object exists:', typeof document !== 'undefined');
     
     // Comprehensive Zoom interface exploration
     function exploreZoomInterface() {
-        log('INFO: === ZOOM INTERFACE EXPLORATION ===');
+        log('🔍 === ZOOM INTERFACE EXPLORATION ===');
         
         // Find all buttons and clickable elements
         const buttons = document.querySelectorAll('button, [role="button"], .clickable, [onclick]');
-        log(`BUTTONS: Found ${buttons.length} clickable elements`);
+        log(`📱 Found ${buttons.length} clickable elements`);
         
         const interestingButtons = [];
         buttons.forEach((btn, i) => {
@@ -2601,7 +2808,7 @@
             }
         });
         
-        log(`TARGET: Found ${interestingButtons.length} interesting buttons:`);
+        log(`🎯 Found ${interestingButtons.length} interesting buttons:`);
         interestingButtons.forEach((btn, i) => {
             log(`  ${i + 1}. "${btn.text}" | aria: "${btn.ariaLabel}" | class: "${btn.className}"`);
         });
@@ -2611,7 +2818,7 @@
     
     // Find all clickable elements with detailed analysis
     function findClickableElements() {
-        log('INFO: === CLICKABLE ELEMENTS ANALYSIS ===');
+        log('🔍 === CLICKABLE ELEMENTS ANALYSIS ===');
         
         const clickableSelectors = [
             'button',
@@ -2649,7 +2856,7 @@
             }
         });
         
-        log('TARGET: Clickable elements by selector:');
+        log('🎯 Clickable elements by selector:');
         Object.entries(results).forEach(([selector, elements]) => {
             if (elements.length > 0) {
                 log(`  ${selector}: ${elements.length} elements`);
@@ -2664,7 +2871,7 @@
     
     // Analyze panel states and structures
     function analyzePanels() {
-        log('INFO: === PANEL ANALYSIS ===');
+        log('🔍 === PANEL ANALYSIS ===');
         
         // Look for panel containers
         const panelSelectors = [
@@ -2710,7 +2917,7 @@
     
     // Intercept and log Zoom events
     function interceptZoomEvents() {
-        log('INFO: === ZOOM EVENT INTERCEPTION ===');
+        log('🔍 === ZOOM EVENT INTERCEPTION ===');
         
         // Override common event methods to see what's happening
         const originalAddEventListener = EventTarget.prototype.addEventListener;
@@ -2733,19 +2940,19 @@
                 text.toLowerCase().includes('chat') ||
                 ariaLabel.toLowerCase().includes('participant') ||
                 ariaLabel.toLowerCase().includes('chat')) {
-                log(`CLICK: Clicked: "${text}" | aria: "${ariaLabel}" | tag: ${target.tagName}`);
+                log(`🖱️ Clicked: "${text}" | aria: "${ariaLabel}" | tag: ${target.tagName}`);
                 log(`   Classes: ${target.className}`);
                 log(`   ID: ${target.id}`);
             }
         }, true);
         
-        log('SUCCESS: Event interception started - perform actions now!');
+        log('✅ Event interception started - perform actions now!');
         return 'Event interception active';
     }
     
     // Find Zoom's internal APIs and global objects
     function findZoomAPIs() {
-        log('INFO: === ZOOM API DISCOVERY ===');
+        log('🔍 === ZOOM API DISCOVERY ===');
         
         const zoomObjects = [];
         
@@ -2815,11 +3022,11 @@
     
     // Debug function to show all available panel buttons
     function debugPanelButtons() {
-        log('INFO: === PANEL BUTTONS DEBUG ===');
+        log('🔍 === PANEL BUTTONS DEBUG ===');
         
         // Find ALL buttons in the current document
         const allButtons = document.querySelectorAll('button, [role="button"]');
-        log(`BUTTONS: Total buttons found: ${allButtons.length}`);
+        log(`📱 Total buttons found: ${allButtons.length}`);
         
         // Show all buttons with participants in aria-label
         const participantButtons = Array.from(allButtons).filter(btn => {
@@ -2827,7 +3034,7 @@
             return ariaLabel.toLowerCase().includes('participant');
         });
         
-        log(`PARTICIPANTS: Participants-related buttons (${participantButtons.length}):`);
+        log(`👥 Participants-related buttons (${participantButtons.length}):`);
         participantButtons.forEach((btn, i) => {
             const text = btn.textContent?.trim().substring(0, 30) || '';
             const ariaLabel = btn.getAttribute('aria-label') || '';
@@ -2841,7 +3048,7 @@
             return ariaLabel.toLowerCase().includes('chat');
         });
         
-        log(`CHAT: Chat-related buttons (${chatButtons.length}):`);
+        log(`💬 Chat-related buttons (${chatButtons.length}):`);
         chatButtons.forEach((btn, i) => {
             const text = btn.textContent?.trim().substring(0, 30) || '';
             const ariaLabel = btn.getAttribute('aria-label') || '';
@@ -2851,7 +3058,7 @@
         
         // Show all footer buttons (likely where panel controls are)
         const footerButtons = document.querySelectorAll('.footer-button, [class*="footer"], [class*="control"]');
-        log(`FOOTER: Footer/Control buttons (${footerButtons.length}):`);
+        log(`🦶 Footer/Control buttons (${footerButtons.length}):`);
         footerButtons.forEach((btn, i) => {
             if (i < 10) { // Limit to first 10
                 const text = btn.textContent?.trim().substring(0, 30) || '';
@@ -2887,16 +3094,16 @@
         
         const finalResult = isMeeting || isIframeMeeting;
         
-        log(`INFO: URL check: ${url}`);
-        log(`INFO: Is in meeting: ${finalResult} (base: ${isMeeting}, iframe: ${isIframeMeeting})`);
-        log(`INFO: Has meeting elements: ${hasMeetingElements}, Has video: ${hasVideoElements}`);
+        log(`🔍 URL check: ${url}`);
+        log(`🔍 Is in meeting: ${finalResult} (base: ${isMeeting}, iframe: ${isIframeMeeting})`);
+        log(`🔍 Has meeting elements: ${hasMeetingElements}, Has video: ${hasVideoElements}`);
         
         return finalResult;
     }
     
     // Debug function to check extension context
     function debugExtensionContext() {
-        console.log('INFO: === EXTENSION CONTEXT DEBUG ===');
+        console.log('🔍 === EXTENSION CONTEXT DEBUG ===');
         console.log('Current URL:', window.location.href);
         console.log('Is in iframe:', window !== window.top);
         console.log('Is in Zoom meeting:', isInZoomMeeting());
@@ -2907,11 +3114,11 @@
     
     // Debug function to show all chat-related buttons
     function debugChatButtons() {
-        log('INFO: === CHAT BUTTONS DEBUG ===');
+        log('🔍 === CHAT BUTTONS DEBUG ===');
         
         // Find ALL buttons in the current document
         const allButtons = document.querySelectorAll('button, [role="button"]');
-        log(`BUTTONS: Total buttons found: ${allButtons.length}`);
+        log(`📱 Total buttons found: ${allButtons.length}`);
         
         // Show all buttons with "chat" in aria-label
         const chatButtons = Array.from(allButtons).filter(btn => {
@@ -2920,7 +3127,7 @@
             return ariaLabel.toLowerCase().includes('chat') || title.toLowerCase().includes('chat');
         });
         
-        log(`CHAT: Chat-related buttons (${chatButtons.length}):`);
+        log(`💬 Chat-related buttons (${chatButtons.length}):`);
         chatButtons.forEach((btn, i) => {
             const text = btn.textContent?.trim().substring(0, 30) || '';
             const ariaLabel = btn.getAttribute('aria-label') || '';
@@ -2932,7 +3139,7 @@
         
         // Show all footer buttons (likely where meeting chat controls are)
         const footerButtons = document.querySelectorAll('.footer-button, [class*="footer"], [class*="control"]');
-        log(`FOOTER: Footer/Control buttons (${footerButtons.length}):`);
+        log(`🦶 Footer/Control buttons (${footerButtons.length}):`);
         footerButtons.forEach((btn, i) => {
             if (i < 15) { // Limit to first 15
                 const text = btn.textContent?.trim().substring(0, 30) || '';
@@ -2948,12 +3155,12 @@
     
     // Test recipient selection functionality
     async function testRecipientSelection() {
-        log('TEST: === TESTING RECIPIENT SELECTION ===');
+        log('🧪 === TESTING RECIPIENT SELECTION ===');
         
         // First, make sure chat panel is open
         const chatOpened = openChatPanel();
         if (!chatOpened) {
-            log('ERROR: Cannot test recipient selection: Chat panel not open');
+            log('❌ Cannot test recipient selection: Chat panel not open');
             return;
         }
         
@@ -2962,13 +3169,13 @@
         
         // Test selecting a specific recipient
         const testRecipient = 'ᴀʙʜɪᴊɪᴛʜ'; // Use the participant name from your meeting
-        log(`TEST: Testing selection of recipient: ${testRecipient}`);
+        log(`🧪 Testing selection of recipient: ${testRecipient}`);
         
         const success = await selectChatRecipient(testRecipient);
         if (success) {
-            log('SUCCESS: Recipient selection test successful!');
+            log('✅ Recipient selection test successful!');
         } else {
-            log('ERROR: Recipient selection test failed');
+            log('❌ Recipient selection test failed');
         }
         
         log('=== END RECIPIENT SELECTION TEST ===');
@@ -2976,12 +3183,12 @@
     
     // Force select recipient by clicking directly on participant list
     async function forceSelectRecipient(recipientName) {
-        log(`TARGET: Force selecting recipient: ${recipientName}`);
+        log(`🎯 Force selecting recipient: ${recipientName}`);
         
         try {
             // First, ensure chat panel is open
             if (!openChatPanel()) {
-                log('ERROR: Cannot force select recipient: Chat panel not open');
+                log('❌ Cannot force select recipient: Chat panel not open');
                 return false;
             }
             
@@ -2994,11 +3201,11 @@
             for (const element of participantElements) {
                 const text = element.textContent || '';
                 if (text.includes(recipientName)) {
-                    log(`SUCCESS: Found participant element: "${text}"`);
+                    log(`✅ Found participant element: "${text}"`);
                     
                     // Click on the participant to select them
                     element.click();
-                    log(`SUCCESS: Clicked on participant: ${recipientName}`);
+                    log(`✅ Clicked on participant: ${recipientName}`);
                     
                     // Wait for selection to take effect
                     await new Promise(resolve => setTimeout(resolve, 500));
@@ -3008,20 +3215,20 @@
                     const success = await sendChatMessage(testMessage, recipientName);
                     
                     if (success) {
-                        log(`SUCCESS: Force selection successful for ${recipientName}`);
+                        log(`✅ Force selection successful for ${recipientName}`);
                         return true;
                     } else {
-                        log(`ERROR: Force selection failed for ${recipientName}`);
+                        log(`❌ Force selection failed for ${recipientName}`);
                         return false;
                     }
                 }
             }
             
-            log(`ERROR: Participant ${recipientName} not found in participant list`);
+            log(`❌ Participant ${recipientName} not found in participant list`);
             return false;
             
         } catch (error) {
-            log(`ERROR: Error in force selection: ${error.message}`);
+            log(`❌ Error in force selection: ${error.message}`);
             return false;
         }
     }
@@ -3109,18 +3316,18 @@
             try {
                 editableEl.execCommand('selectAll', false, null);
                 editableEl.execCommand('insertText', false, text);
-                log('SUCCESS: Used execCommand method for text input');
+                log('✅ Used execCommand method for text input');
             } catch (e) {
-                log('WARNING: execCommand failed, trying alternative methods');
+                log('⚠️ execCommand failed, trying alternative methods');
             }
             
             // Method 2: Direct textContent assignment (for contenteditable)
             if (editableEl.isContentEditable) {
                 editableEl.textContent = text;
-                log('SUCCESS: Used textContent method for contenteditable');
+                log('✅ Used textContent method for contenteditable');
             } else if (editableEl.value !== undefined) {
                 editableEl.value = text;
-                log('SUCCESS: Used value method for input element');
+                log('✅ Used value method for input element');
             }
             
             // Method 3: Dispatch input event to trigger React state update
@@ -3133,10 +3340,10 @@
             // Method 4: Also try change event
             editableEl.dispatchEvent(new Event('change', { bubbles: true }));
             
-            log(`SUCCESS: Text "${text}" set in chat input`);
+            log(`✅ Text "${text}" set in chat input`);
             
         } catch (error) {
-            log(`ERROR: Error setting text: ${error.message}`);
+            log(`❌ Error setting text: ${error.message}`);
             // Fallback: just set text content directly
             if (editableEl.isContentEditable) {
                 editableEl.textContent = text;
@@ -3167,24 +3374,24 @@
 
     // Try multiple click strategies based on our click tracking discoveries
     async function tryMultipleClickStrategies(element) {
-        log(`TARGET: Trying multiple click strategies for element: ${element.tagName}.${element.className}`);
+        log(`🎯 Trying multiple click strategies for element: ${element.tagName}.${element.className}`);
         
         let anyStrategyWorked = false;
         
         // Strategy 1: Direct click
         try {
-            log('INFO: Strategy 1: Direct click');
+            log('🔍 Strategy 1: Direct click');
             element.click();
             await new Promise(resolve => setTimeout(resolve, 200));
             anyStrategyWorked = true;
-            log('SUCCESS: Strategy 1 completed');
+            log('✅ Strategy 1 completed');
         } catch (e) {
-            log(`ERROR: Strategy 1 failed: ${e.message}`);
+            log(`❌ Strategy 1 failed: ${e.message}`);
         }
         
         // Strategy 2: MouseEvent dispatch (more realistic)
         try {
-            log('INFO: Strategy 2: MouseEvent dispatch');
+            log('🔍 Strategy 2: MouseEvent dispatch');
             const clickEvent = new MouseEvent('click', {
                 bubbles: true,
                 cancelable: true,
@@ -3193,42 +3400,42 @@
             element.dispatchEvent(clickEvent);
             await new Promise(resolve => setTimeout(resolve, 200));
             anyStrategyWorked = true;
-            log('SUCCESS: Strategy 2 completed');
+            log('✅ Strategy 2 completed');
         } catch (e) {
-            log(`ERROR: Strategy 2 failed: ${e.message}`);
+            log(`❌ Strategy 2 failed: ${e.message}`);
         }
         
         // Strategy 3: Click on parent container (based on our click tracking)
         try {
-            log('INFO: Strategy 3: Click on parent container');
+            log('🔍 Strategy 3: Click on parent container');
             const parent = element.parentElement;
             if (parent) {
                 parent.click();
                 await new Promise(resolve => setTimeout(resolve, 200));
                 anyStrategyWorked = true;
-                log('SUCCESS: Strategy 3 completed');
+                log('✅ Strategy 3 completed');
             }
         } catch (e) {
-            log(`ERROR: Strategy 3 failed: ${e.message}`);
+            log(`❌ Strategy 3 failed: ${e.message}`);
         }
         
         // Strategy 4: Find and click on the actual clickable element
         try {
-            log('INFO: Strategy 4: Find actual clickable element');
+            log('🔍 Strategy 4: Find actual clickable element');
             const clickableElement = findClickableParent(element, 3);
             if (clickableElement) {
                 clickableElement.click();
                 await new Promise(resolve => setTimeout(resolve, 200));
                 anyStrategyWorked = true;
-                log('SUCCESS: Strategy 4 completed');
+                log('✅ Strategy 4 completed');
             }
         } catch (e) {
-            log(`ERROR: Strategy 4 failed: ${e.message}`);
+            log(`❌ Strategy 4 failed: ${e.message}`);
         }
         
         // Strategy 5: Try to trigger React events (Zoom's internal system)
         try {
-            log('INFO: Strategy 5: Trigger React events');
+            log('🔍 Strategy 5: Trigger React events');
             
             // Create a more comprehensive event that React might recognize
             const reactEvent = new MouseEvent('mousedown', {
@@ -3254,69 +3461,69 @@
             element.dispatchEvent(reactClickEvent);
             await new Promise(resolve => setTimeout(resolve, 200));
             anyStrategyWorked = true;
-            log('SUCCESS: Strategy 5 completed');
+            log('✅ Strategy 5 completed');
         } catch (e) {
-            log(`ERROR: Strategy 5 failed: ${e.message}`);
+            log(`❌ Strategy 5 failed: ${e.message}`);
         }
         
         // Strategy 6: Try to find and trigger the actual React component
         try {
-            log('INFO: Strategy 6: Find React component and trigger');
+            log('🔍 Strategy 6: Find React component and trigger');
             
             // Look for React internal properties
             const reactKey = Object.keys(element).find(key => key.startsWith('__reactProps$') || key.startsWith('__reactFiber$'));
             if (reactKey) {
-                log(`INFO: Found React property: ${reactKey}`);
+                log(`🔍 Found React property: ${reactKey}`);
                 
                 // Try to access React's internal event handlers
                 const reactProps = element[reactKey];
                 if (reactProps && reactProps.onClick) {
-                    log('INFO: Triggering React onClick handler directly!');
+                    log('🔍 Triggering React onClick handler directly!');
                     reactProps.onClick(new MouseEvent('click'));
                     await new Promise(resolve => setTimeout(resolve, 200));
                     anyStrategyWorked = true;
-                    log('SUCCESS: Strategy 6 completed');
+                    log('✅ Strategy 6 completed');
                 }
             } else {
-                log('INFO: No React properties found on element');
+                log('🔍 No React properties found on element');
             }
         } catch (e) {
-            log(`ERROR: Strategy 6 failed: ${e.message}`);
+            log(`❌ Strategy 6 failed: ${e.message}`);
         }
         
         // Strategy 7: Try to find the exact menuitemradio element from click tracking
         try {
-            log('INFO: Strategy 7: Find exact menuitemradio element');
+            log('🔍 Strategy 7: Find exact menuitemradio element');
             
             // Look for the exact element we saw in click tracking
             const menuitemElements = document.querySelectorAll('[role="menuitemradio"]');
-            log(`INFO: Found ${menuitemElements.length} menuitemradio elements`);
+            log(`🔍 Found ${menuitemElements.length} menuitemradio elements`);
             
             for (const menuitem of menuitemElements) {
                 const text = menuitem.textContent?.trim() || '';
                 if (text === 'Abhi 2') {
-                    log(`TARGET: FOUND EXACT MENUITEM ELEMENT: ${menuitem.tagName}.${menuitem.className}`);
+                    log(`🎯 FOUND EXACT MENUITEM ELEMENT: ${menuitem.tagName}.${menuitem.className}`);
                     
                     // Try to trigger the actual React event
                     try {
                         // Look for React internal properties
                         const reactKey = Object.keys(menuitem).find(key => key.startsWith('__reactProps$'));
                         if (reactKey) {
-                            log(`INFO: Found React property: ${reactKey}`);
+                            log(`🔍 Found React property: ${reactKey}`);
                             const reactProps = menuitem[reactKey];
                             
                             if (reactProps && reactProps.onClick) {
-                                log('INFO: Triggering React onClick directly!');
+                                log('🔍 Triggering React onClick directly!');
                                 reactProps.onClick(new MouseEvent('click'));
                                 await new Promise(resolve => setTimeout(resolve, 500));
                                 anyStrategyWorked = true;
-                                log('SUCCESS: Strategy 7 React onClick triggered!');
+                                log('✅ Strategy 7 React onClick triggered!');
                                 break;
                             }
                         }
                         
                         // If no React props, try comprehensive event dispatch
-                        log('INFO: No React props, trying comprehensive event dispatch...');
+                        log('🔍 No React props, trying comprehensive event dispatch...');
                         const events = ['mousedown', 'mouseup', 'click'];
                         for (const eventType of events) {
                             const event = new MouseEvent(eventType, {
@@ -3327,33 +3534,33 @@
                                 button: 0
                             });
                             menuitem.dispatchEvent(event);
-                            log(`SUCCESS: Dispatched ${eventType} event`);
+                            log(`✅ Dispatched ${eventType} event`);
                             await new Promise(resolve => setTimeout(resolve, 100));
                         }
                         anyStrategyWorked = true;
-                        log('SUCCESS: Strategy 7 comprehensive events completed');
+                        log('✅ Strategy 7 comprehensive events completed');
                     } catch (e) {
-                        log(`ERROR: Strategy 7 React handling failed: ${e.message}`);
+                        log(`❌ Strategy 7 React handling failed: ${e.message}`);
                     }
                 }
             }
         } catch (e) {
-            log(`ERROR: Strategy 7 failed: ${e.message}`);
+            log(`❌ Strategy 7 failed: ${e.message}`);
         }
         
         if (anyStrategyWorked) {
-            log('SUCCESS: At least one strategy completed successfully');
+            log('✅ At least one strategy completed successfully');
             return true;
         } else {
-            log('ERROR: All click strategies failed');
+            log('❌ All click strategies failed');
             return false;
         }
     }
     
-    log('SUCCESS: ZoomWatch content script loaded and ready!');
+    log('✅ ZoomWatch content script loaded and ready!');
     
     // Immediate inline test
-    console.log('INFO: INLINE TEST - Extension just loaded');
+    console.log('🔍 INLINE TEST - Extension just loaded');
     console.log('Functions available:', {
         startClickTracking: typeof window.startClickTracking,
         testZoomWatch: typeof window.testZoomWatch,
@@ -3362,7 +3569,7 @@
     });
     
     // Basic test to see if the script is running at all
-    console.log('INFO: BASIC TEST - Script is running');
+    console.log('🔍 BASIC TEST - Script is running');
     console.log('Current URL:', window.location.href);
     console.log('Is in iframe:', window !== window.top);
     console.log('Document ready state:', document.readyState);
@@ -3371,50 +3578,50 @@
     debugExtensionContext();
     
     // Automatically start click tracking for debugging
-    console.log('INFO: Auto-starting click tracking...');
+    console.log('🔍 Auto-starting click tracking...');
     setTimeout(() => {
         try {
             addClickTracking();
-            console.log('SUCCESS: Click tracking started automatically!');
-            console.log('TARGET: Now click on the "Everyone" button and then on a participant name to see what gets logged');
+            console.log('✅ Click tracking started automatically!');
+            console.log('🎯 Now click on the "Everyone" button and then on a participant name to see what gets logged');
         } catch (e) {
-            console.log('ERROR: Error starting click tracking:', e.message);
+            console.log('❌ Error starting click tracking:', e.message);
         }
     }, 2000); // Wait 2 seconds for everything to load
     
     // Add a simple check to verify the extension is working
     setTimeout(() => {
-        console.log('INFO: Checking global functions...');
+        console.log('🔍 Checking global functions...');
         console.log('startClickTracking:', typeof window.startClickTracking);
         console.log('testZoomWatch:', typeof window.testZoomWatch);
         console.log('debugZoomWatch:', typeof window.debugZoomWatch);
         console.log('ZoomWatch object:', typeof window.ZoomWatch);
         
         if (window.startClickTracking) {
-            console.log('SUCCESS: Global functions are available');
+            console.log('✅ Global functions are available');
         } else {
-            console.log('ERROR: Global functions are not available');
+            console.log('❌ Global functions are not available');
         }
         
         if (window.ZoomWatch) {
-            console.log('SUCCESS: ZoomWatch object is available');
+            console.log('✅ ZoomWatch object is available');
         } else {
-            log('ERROR: ZoomWatch object is not available');
+            log('❌ ZoomWatch object is not available');
         }
         
         // Try to create a simple test function in the main frame
         try {
             window.testSimpleFunction = function() {
-                console.log('TARGET: Simple test function works!');
+                console.log('🎯 Simple test function works!');
                 return 'SUCCESS';
             };
-            console.log('SUCCESS: Created testSimpleFunction:', typeof window.testSimpleFunction);
+            console.log('✅ Created testSimpleFunction:', typeof window.testSimpleFunction);
             
             // Test calling it
             const result = window.testSimpleFunction();
-            console.log('SUCCESS: Called testSimpleFunction, result:', result);
+            console.log('✅ Called testSimpleFunction, result:', result);
         } catch (e) {
-            console.log('ERROR: Error creating test function:', e.message);
+            console.log('❌ Error creating test function:', e.message);
         }
     }, 1000);
     
