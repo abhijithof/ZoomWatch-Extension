@@ -3,231 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZoomWatch</title>
+    <title>ZoomWatch - Participant Monitor</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="popup-container">
         <!-- Header -->
         <div class="header">
-            <div class="header-content">
-                <div class="logo-section">
-                    <div class="logo">📹</div>
-                    <div class="brand">
-                        <h1>ZoomWatch</h1>
-                        <p class="tagline">Camera Status Monitor</p>
-                    </div>
+            <div class="logo">📹</div>
+            <div class="title">
+                <h1>ZoomWatch</h1>
+                <p>Participant Monitor</p>
+            </div>
+            <div class="connection-status">
+                <div id="connectionStatus" class="status-indicator connecting">Connecting...</div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div id="statusText" class="status-text">Initializing...</div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📹</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="totalParticipants">0</div>
+                    <div class="stat-label">Total Participants</div>
                 </div>
-                <div class="connection-status" id="connectionStatus">
-                    <div class="status-dot" id="statusDot"></div>
-                    <span id="connectionText">Connecting...</span>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">🟢</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="camerasOn">0</div>
+                    <div class="stat-label">Cameras ON</div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">🔴</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="camerasOff">0</div>
+                    <div class="stat-label">Cameras OFF</div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">🚨</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="warningsSent">0</div>
+                    <div class="stat-label">Warnings Sent</div>
                 </div>
             </div>
         </div>
 
-        <!-- Main Stats -->
-        <div class="stats-container">
-            <div class="stats-grid">
-                <div class="stat-card primary" id="totalCard">
-                    <div class="stat-icon">👥</div>
-                    <div class="stat-info">
-                        <div class="stat-value" id="participantCount">0</div>
-                        <div class="stat-label">Participants</div>
-                    </div>
-                </div>
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <div class="control-row">
+                <button id="startBtn" class="btn btn-primary">
+                    <span class="btn-icon">▶️</span>
+                    <span>Start Monitoring</span>
+                </button>
                 
-                <div class="stat-card success" id="camerasOnCard">
-                    <div class="stat-icon">📹</div>
-                    <div class="stat-info">
-                        <div class="stat-value" id="camerasOnCount">0</div>
-                        <div class="stat-label">Cameras On</div>
-                    </div>
-                </div>
+                <button id="stopBtn" class="btn btn-danger" disabled>
+                    <span class="btn-icon">⏹️</span>
+                    <span>Stop</span>
+                </button>
                 
-                <div class="stat-card warning" id="camerasOffCard">
-                    <div class="stat-icon">📷</div>
-                    <div class="stat-info">
-                        <div class="stat-value" id="camerasOffCount">0</div>
-                        <div class="stat-label">Cameras Off</div>
-                    </div>
-                </div>
+                <button id="pauseBtn" class="btn btn-warning" disabled>
+                    <span class="btn-icon">⏸️</span>
+                    <span>Pause</span>
+                </button>
             </div>
-        </div>
-
-        <!-- Status Panel -->
-        <div class="status-panel">
-            <div class="status-content">
-                <div class="status-indicator" id="statusIndicator">
-                    <div class="pulse-dot"></div>
-                    <span id="statusText">Initializing...</span>
-                </div>
-                <div class="last-update" id="lastUpdate">Never updated</div>
-            </div>
-        </div>
-
-        <!-- Controls -->
-        <div class="controls-section">
-            <button id="startBtn" class="btn btn-primary">
-                <span class="btn-icon">▶️</span>
-                <span>Start Monitoring</span>
-            </button>
-            <button id="stopBtn" class="btn btn-secondary" style="display: none;">
-                <span class="btn-icon">⏹️</span>
-                <span>Stop</span>
-            </button>
-            <button id="pauseBtn" class="btn btn-secondary" style="display: none;">
-                <span class="btn-icon">⏸️</span>
-                <span>Pause</span>
-            </button>
-        </div>
-
-        <!-- Auto-Warning Controls -->
-        <div class="warning-controls">
-            <div class="section-header">
-                <h3>Auto-Warning System</h3>
-                <div class="warning-toggle">
-                    <input type="checkbox" id="autoWarningsToggle" checked>
-                    <label for="autoWarningsToggle" class="toggle-label">
-                        <span class="toggle-switch"></span>
+            
+            <div class="control-row">
+                <button id="testMessageBtn" class="btn btn-secondary">
+                    <span class="btn-icon">💬</span>
+                    <span>Test Message</span>
+                </button>
+                
+                <div class="toggle-container">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="autoWarningsToggle" checked>
+                        <span class="toggle-slider"></span>
+                        Auto Warnings
                     </label>
                 </div>
             </div>
-            <div class="warning-stats">
-                <div class="warning-stat">
-                    <span class="warning-icon">🚨</span>
-                    <span id="warningsSentCount">0</span>
-                    <span class="warning-label">Warnings Sent</span>
-                </div>
-                <div class="warning-stat">
-                    <span class="warning-icon">👤</span>
-                    <span id="monitorProfile">Detecting...</span>
-                    <span class="warning-label">Monitor Profile</span>
-                </div>
-            </div>
-            <button id="testMessageBtn" class="btn btn-test">
-                <span class="btn-icon">💬</span>
-                <span>Test Message</span>
-            </button>
         </div>
 
-        <!-- Panel Control Testing -->
-        <div class="debug-section">
+        <!-- Participants Section -->
+        <div class="participants-section" id="participantsContainer">
             <div class="section-header">
-                <h3>🎛️ Panel Controls (Testing)</h3>
-            </div>
-            <div class="debug-controls">
-                <button id="openParticipantsBtn" class="btn btn-debug">
-                    <span class="btn-icon">👥</span>
-                    <span>Open Participants</span>
-                </button>
-                <button id="closeParticipantsBtn" class="btn btn-debug">
-                    <span class="btn-icon">📴</span>
-                    <span>Close Participants</span>
-                </button>
-                <button id="openChatBtn" class="btn btn-debug">
-                    <span class="btn-icon">💬</span>
-                    <span>Open Chat</span>
-                </button>
-                <button id="closeChatBtn" class="btn btn-debug">
-                    <span class="btn-icon">🔕</span>
-                    <span>Close Chat</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Participants List -->
-        <div class="participants-section" id="participantsSection" style="display: none;">
-            <div class="section-header">
-                <h3>Participants</h3>
-                <div class="expand-toggle" id="expandToggle">
-                    <span>👁️</span>
-                </div>
+                <h3>👥 Participants</h3>
+                <button id="expandToggle" class="expand-toggle">Show Participants</button>
             </div>
             <div class="participants-list" id="participantsList">
                 <!-- Participants will be populated here -->
-            </div>
-        </div>
-
-        <!-- Recent Warnings -->
-        <div class="warnings-section" id="warningsSection" style="display: none;">
-            <div class="section-header">
-                <h3>Recent Warnings</h3>
-                <span class="warning-count" id="warningCount">0</span>
-            </div>
-            <div class="warnings-list" id="warningsList">
-                <!-- Warnings will be populated here -->
-            </div>
-        </div>
-
-        <!-- Reverse Engineering Tools -->
-        <div class="debug-section">
-            <div class="section-header">
-                <h3>🔧 Zoom Interface Analysis</h3>
-            </div>
-            <div class="debug-controls">
-                <button id="exploreBtn" class="btn btn-debug">
-                    <span class="btn-icon">🔍</span>
-                    <span>Explore Interface</span>
-                </button>
-                <button id="findElementsBtn" class="btn btn-debug">
-                    <span class="btn-icon">📱</span>
-                    <span>Find Elements</span>
-                </button>
-                <button id="analyzePanelsBtn" class="btn btn-debug">
-                    <span class="btn-icon">📋</span>
-                    <span>Analyze Panels</span>
-                </button>
-                <button id="interceptEventsBtn" class="btn btn-debug">
-                    <span class="btn-icon">📡</span>
-                    <span>Intercept Events</span>
-                </button>
-                <button id="findAPIsBtn" class="btn btn-debug">
-                    <span class="btn-icon">🌐</span>
-                    <span>Find APIs</span>
-                </button>
-                <button id="debugPanelButtonsBtn" class="btn btn-debug">
-                    <span class="btn-icon">🔍</span>
-                    <span>Debug Panels</span>
-                </button>
-                <button id="debugChatButtonsBtn" class="btn btn-debug">
-                    <span class="btn-icon">💬</span>
-                    <span>Debug Chat</span>
-                </button>
-                <button id="checkMeetingContextBtn" class="btn btn-debug">
-                    <span class="btn-icon">🔍</span>
-                    <span>Check Context</span>
-                </button>
-                <button id="debugParticipantSelectorBtn" class="btn btn-debug">
-                    <span class="btn-icon">👤</span>
-                    <span>Debug Selector</span>
-                </button>
-                <button id="openPanelsBtn" class="btn btn-debug">
-                    <span class="btn-icon">🔓</span>
-                    <span>Open Panels</span>
-                </button>
-                <button id="forceOpenPanelsBtn" class="btn btn-debug">
-                    <span class="btn-icon">⚡</span>
-                    <span>Force Open</span>
-                </button>
-                <button id="debugMeetingDetectionBtn" class="btn btn-debug">
-                    <span class="btn-icon">🔍</span>
-                    <span>Debug Meeting</span>
-                </button>
-                <button id="debugRecipientSelectionBtn" class="btn btn-debug">
-                    <span class="btn-icon">👤</span>
-                    <span>Debug Recipient</span>
-                </button>
-                <button id="forceSelectRecipientBtn" class="btn btn-debug">
-                    <span class="btn-icon">🎯</span>
-                    <span>Force Select</span>
-                </button>
-                <button id="debugMessageDeduplicationBtn" class="btn btn-debug">
-                    <span class="btn-icon">📨</span>
-                    <span>Debug Messages</span>
-                </button>
             </div>
         </div>
 
@@ -236,20 +111,17 @@
             <button id="refreshBtn" class="action-btn" title="Refresh Data">
                 <span>🔄</span>
             </button>
-            <button id="debugBtn" class="action-btn" title="Debug Console">
-                <span>🔍</span>
-            </button>
-            <button id="settingsBtn" class="action-btn" title="Settings">
-                <span>⚙️</span>
-            </button>
         </div>
 
         <!-- Footer -->
         <div class="footer">
             <div class="version-info">
-                <span>v1.0.0</span>
+                <span>v3.0.0</span>
                 <span class="separator">•</span>
                 <span id="updateTime">Just now</span>
+            </div>
+            <div class="last-update">
+                <span id="lastUpdate">Updated just now</span>
             </div>
         </div>
     </div>
