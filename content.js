@@ -1584,22 +1584,11 @@
         log('=== END RECIPIENT SELECTION DEBUG ===');
     }
     
-    // Debug message deduplication
-    function debugMessageDeduplication() {
-        log('📨 === DEBUGGING MESSAGE DEDUPLICATION ===');
-        log(`📨 Sent messages cache: ${Array.from(sentMessages).join(', ')}`);
-        log(`📨 Last message times:`);
-        for (const [participant, time] of lastMessageTime.entries()) {
-            const secondsAgo = Math.round((Date.now() - time) / 1000);
-            log(`  ${participant}: ${secondsAgo}s ago`);
-        }
-        log(`📨 Message cooldown: ${messageCooldown / 1000}s`);
-        log('=== END MESSAGE DEDUPLICATION DEBUG ===');
-    }
+
     
     // Check if chat panel is currently open
     function isChatPanelOpen() {
-        log('🔍 Checking if chat panel is open...');
+        log('Checking if chat panel is open...');
         
         // Look for chat panel indicators with more specific Zoom selectors
         const chatPanelSelectors = [
