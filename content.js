@@ -351,15 +351,34 @@
             '[role="textbox"]'
         ];
         
+        // First try current document
         for (const selector of chatSelectors) {
             const element = document.querySelector(selector);
             if (element && element.offsetWidth > 0) {
-                log(`✅ Found chat input: ${selector}`);
+                log(`✅ Found chat input in current document: ${selector}`);
                 return element;
             }
         }
         
-        log('❌ Chat input not found');
+        // If not found, search in iframes
+        log('🔍 Chat input not found in current document, searching iframes...');
+        const iframes = document.querySelectorAll('iframe');
+        for (let i = 0; i < iframes.length; i++) {
+            try {
+                const iframeDoc = iframes[i].contentDocument || iframes[i].contentWindow.document;
+                for (const selector of chatSelectors) {
+                    const element = iframeDoc.querySelector(selector);
+                    if (element && element.offsetWidth > 0) {
+                        log(`✅ Found chat input in iframe ${i + 1}: ${selector}`);
+                        return element;
+                    }
+                }
+            } catch (e) {
+                log(`⚠️ Could not access iframe ${i + 1}: ${e.message}`);
+            }
+        }
+        
+        log('❌ Chat input not found in current document or any iframe');
         return null;
     }
     
@@ -378,18 +397,40 @@
             '.chat-send-button',
             '.send-button',
             'button[type="submit"]',
-            'button:has(svg):near(textarea)'
+            // Look for buttons with SVG icons near the chat area
+            'button svg',
+            'button[class*="send"]',
+            'button[class*="submit"]'
         ];
         
+        // First try current document
         for (const selector of sendSelectors) {
             const element = document.querySelector(selector);
             if (element && element.offsetWidth > 0) {
-                log(`✅ Found send button: ${selector}`);
+                log(`✅ Found send button in current document: ${selector}`);
                 return element;
             }
         }
         
-        log('❌ Send button not found');
+        // If not found, search in iframes
+        log('🔍 Send button not found in current document, searching iframes...');
+        const iframes = document.querySelectorAll('iframe');
+        for (let i = 0; i < iframes.length; i++) {
+            try {
+                const iframeDoc = iframes[i].contentDocument || iframes[i].contentWindow.document;
+                for (const selector of sendSelectors) {
+                    const element = iframeDoc.querySelector(selector);
+                    if (element && element.offsetWidth > 0) {
+                        log(`✅ Found send button in iframe ${i + 1}: ${selector}`);
+                        return element;
+                    }
+                }
+            } catch (e) {
+                log(`⚠️ Could not access iframe ${i + 1}: ${e.message}`);
+            }
+        }
+        
+        log('❌ Send button not found in current document or any iframe');
         return null;
     }
     
@@ -417,20 +458,16 @@
             // Focus on chat input
             chatInput.focus();
             
-            // Clear existing content
-            chatInput.value = '';
-            if (chatInput.contentEditable === 'true') {
-                chatInput.textContent = '';
-            }
-            
-            // Insert the message (no need for @mention since we selected the recipient)
-            const finalMessage = message;
+            // Clear existing content and insert message using ProseMirror-compatible method
+            log(`🔍 Setting message text: "${message}" in chat input`);
+            log(`🔍 Chat input type: contentEditable=${chatInput.contentEditable}, tagName=${chatInput.tagName}`);
             
             if (chatInput.contentEditable === 'true') {
-                chatInput.textContent = finalMessage;
-                chatInput.dispatchEvent(new Event('input', { bubbles: true }));
+                log('🔍 Using setProseMirrorText for contenteditable element');
+                setProseMirrorText(chatInput, message);
             } else {
-                chatInput.value = finalMessage;
+                log('🔍 Using direct value assignment for input element');
+                chatInput.value = message;
                 chatInput.dispatchEvent(new Event('input', { bubbles: true }));
                 chatInput.dispatchEvent(new Event('change', { bubbles: true }));
             }
@@ -438,13 +475,21 @@
             // Wait a moment for the UI to update
             await new Promise(resolve => setTimeout(resolve, 500));
             
+            // Verify the text was actually set
+            const actualText = chatInput.contentEditable === 'true' ? chatInput.textContent : chatInput.value;
+            log(`🔍 Text verification: Input now contains: "${actualText}"`);
+            
             // Find and click send button
             const sendButton = findChatSendButton();
+            log(`🔍 Send button found: ${sendButton ? 'YES' : 'NO'}, disabled: ${sendButton?.disabled}`);
+            
             if (sendButton && !sendButton.disabled) {
+                log('🔍 Clicking send button...');
                 sendButton.click();
                 log(`✅ Message sent successfully to ${recipientName}`);
                 return true;
             } else {
+                log('🔍 Send button not available, trying Enter key...');
                 // Try Enter key as fallback
                 const enterEvent = new KeyboardEvent('keydown', {
                     key: 'Enter',
@@ -468,123 +513,231 @@
     async function selectChatRecipient(recipientName) {
         log(`🎯 Selecting chat recipient: ${recipientName}`);
         
-        // SIMPLE APPROACH: Just click the "Everyone" button and wait for dropdown
-        const everyoneButton = document.querySelector('button[aria-label*="Everyone"], .chat-receiver-list__receiver, [class*="chat-receiver"]');
-        if (!everyoneButton) {
-            log('❌ Everyone button not found');
+        // Ensure chat panel is open first
+        if (!isChatPanelOpen()) {
+            if (!openChatPanel()) return false;
+            await new Promise(resolve => setTimeout(resolve, 400));
+        }
+        
+        // Find the iframe that owns the chat receiver button
+        const { iframe: receiverIframe, doc: receiverDoc, win: receiverWin } = findReceiverOwnerIframe();
+        log(`🔍 Chat receiver owner: ${receiverIframe ? 'iframe' : 'main frame'}`);
+        
+        // Find and click the receiver button to open dropdown - EXACTLY like ChatGPT code
+        let receiverBtn = receiverDoc.querySelector('button.chat-receiver-list__receiver') ||
+                         receiverDoc.querySelector('[class*="chat-receiver"][role="button"]') ||
+                         receiverDoc.querySelector('[class*="chat-receiver"]');
+        
+        if (!receiverBtn) {
+            log('❌ Receiver button not found in receiver iframe');
             return false;
         }
         
-        log(`✅ Found Everyone button: ${everyoneButton.ariaLabel || 'no aria-label'}`);
+        log(`✅ Found receiver button in ${receiverIframe ? 'iframe' : 'main frame'}`);
         
-        // Click the Everyone button
-        everyoneButton.click();
-        log('✅ Clicked Everyone dropdown');
+        // Click to open dropdown - EXACTLY like ChatGPT code
+        receiverBtn.click();
+        log('✅ Clicked receiver dropdown');
+        await new Promise(r => setTimeout(r, 500));
         
-        // Wait longer for dropdown to fully populate
-        log('⏳ Waiting for dropdown to populate...');
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        // Now find the ACTUAL chat recipient dropdown (not audio/video menus)
+        log('🔍 Searching for recipient in dropdown...');
         
-        // ENHANCED SEARCH: Look for the specific chat-receiver-list__menu-item elements we discovered
-        log('🔍 Looking for chat-receiver-list__menu-item elements...');
-        let recipientOptions = document.querySelectorAll('[class*="chat-receiver-list__menu-item"]');
-        log(`🔍 Found ${recipientOptions.length} chat-receiver-list__menu-item elements in current document`);
+        // Look for the chat recipient dropdown specifically
+        let dropdownMenu = receiverDoc.querySelector(
+            '[class*="chat-receiver-list__menu"], ' +
+            '[class*="chat-receiver-list__dropdown"], ' +
+            '[class*="chat-receiver-list__options"], ' +
+            '[class*="chat-receiver-list__items"]'
+        );
         
-        // If not found in current context, search iframes
-        if (recipientOptions.length === 0) {
-            log('🔍 No chat-receiver-list__menu-item elements in current context, searching iframes...');
-            const iframes = document.querySelectorAll('iframe');
+        if (!dropdownMenu) {
+            log('❌ No chat recipient dropdown menu found after clicking receiver button');
+            log('🔍 Looking for any dropdown that might contain recipient options...');
             
-            for (let i = 0; i < iframes.length; i++) {
-                try {
-                    const iframeDoc = iframes[i].contentDocument || iframes[i].contentWindow.document;
-                    const iframeOptions = iframeDoc.querySelectorAll('[class*="chat-receiver-list__menu-item"]');
-                    
-                    if (iframeOptions.length > 0) {
-                        log(`✅ Found ${iframeOptions.length} chat-receiver-list__menu-item elements in iframe ${i + 1}`);
-                        recipientOptions = iframeOptions;
-                        break;
-                    }
-                } catch (e) {
-                    log(`⚠️ Could not access iframe ${i + 1}: ${e.message}`);
-                }
-            }
-        }
-        
-        // Fallback to general dropdown options if still not found
-        if (recipientOptions.length === 0) {
-            log('🔍 Fallback: Looking for general dropdown options...');
-            recipientOptions = document.querySelectorAll('[role="option"], [role="menuitem"], .dropdown-item, [class*="dropdown"], [class*="dropup"], [class*="menu-item"], [class*="list-item"]');
+            // Fallback: Look for any dropdown that contains participant names
+            const allDropdowns = receiverDoc.querySelectorAll('[class*="dropdown"], [class*="menu"], [class*="options"], [class*="items"]');
+            log(`🔍 Found ${allDropdowns.length} potential dropdowns/menus`);
             
-            if (recipientOptions.length === 0) {
-                const iframes = document.querySelectorAll('iframe');
-                for (let i = 0; i < iframes.length; i++) {
-                    try {
-                        const iframeDoc = iframes[i].contentDocument || iframes[i].contentWindow.document;
-                        const iframeOptions = iframeDoc.querySelectorAll('[role="option"], [role="menuitem"], .dropdown-item, [class*="dropdown"], [class*="dropup"], [class*="menu-item"], [class*="list-item"]');
-                        if (iframeOptions.length > 0) {
-                            log(`✅ Found ${iframeOptions.length} general options in iframe ${i + 1}`);
-                            recipientOptions = iframeOptions;
-                            break;
-                        }
-                    } catch (e) {
-                        log(`⚠️ Could not access iframe ${i + 1}: ${e.message}`);
-                    }
-                }
-            }
-        }
-        
-        log(`🔍 Found ${recipientOptions.length} recipient options, looking for "${recipientName}"...`);
-        
-        // Look for the target recipient
-        let targetRecipient = null;
-        for (const option of recipientOptions) {
-            const text = option.textContent?.trim() || '';
-            const className = option.className || '';
-            log(`🔍 Checking option: "${text}" (${className})`);
-            
-            if (text === recipientName || text.includes(recipientName)) {
-                targetRecipient = option;
-                log(`✅ Found recipient: "${text}"`);
-                break;
-            }
-        }
-        
-        if (targetRecipient) {
-            targetRecipient.click();
-            log(`✅ Clicked recipient: ${recipientName}`);
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            return true;
-        }
-        
-        // If still not found, try parent window (for iframe context)
-        if (window !== window.top) {
-            try {
-                log('🔍 Checking parent window for recipient options...');
-                const parentOptions = window.parent.document.querySelectorAll('[class*="chat-receiver-list__menu-item"], [role="option"], [role="menuitem"], .dropdown-item, [class*="dropdown"], [class*="dropup"]');
-                log(`🔍 Found ${parentOptions.length} dropdown options in parent window`);
+            for (let i = 0; i < allDropdowns.length; i++) {
+                const dd = allDropdowns[i];
+                const text = dd.textContent?.trim() || '';
+                const className = dd.className || '';
+                log(`🔍 Dropdown ${i + 1}: ${dd.tagName}.${className} - Text: "${text.substring(0, 100)}"`);
                 
-                for (const option of parentOptions) {
-                    const text = option.textContent?.trim() || '';
-                    if (text === recipientName || text.includes(recipientName)) {
-                        log(`✅ Found recipient in parent window: "${text}"`);
-                        option.click();
-                        log(`✅ Clicked recipient in parent window: ${recipientName}`);
-                        await new Promise(resolve => setTimeout(resolve, 1000));
-                        return true;
-                    }
+                // Check if this dropdown contains participant names
+                if (text.includes('Abhi 2') || text.includes('Everyone') || text.includes('Meeting')) {
+                    log(`✅ Found dropdown with participant names: ${dd.tagName}.${className}`);
+                    dropdownMenu = dd;
+                    break;
                 }
-            } catch (error) {
-                log(`❌ Cannot access parent window: ${error.message}`);
+            }
+            
+            if (!dropdownMenu) {
+                log('❌ Still no suitable dropdown found');
+                return false;
             }
         }
         
-        log(`❌ Recipient ${recipientName} not found anywhere`);
-        return false;
+        log(`✅ Found dropdown menu: ${dropdownMenu.tagName}.${dropdownMenu.className}`);
+        
+        // Debug: Show what's actually in the dropdown menu
+        log('🔍 Debug: Contents of dropdown menu:');
+        const allDropdownElements = dropdownMenu.querySelectorAll('*');
+        for (let i = 0; i < Math.min(allDropdownElements.length, 10); i++) {
+            const el = allDropdownElements[i];
+            const text = el.textContent?.trim() || '';
+            if (text && text.length < 100) {
+                log(`   ${i + 1}: ${el.tagName}.${el.className} - "${text}"`);
+            }
+        }
+        
+        // Now search ONLY within the dropdown menu for recipient items
+        const selList = [
+            'a.chat-receiver-list__menu-item.dropdown-item',
+            '[role="menuitemradio"]',
+            '[role="option"]',
+            '[class*="chat-receiver-list__menu-item"]',
+            '[class*="dropdown-item"]',
+            '[class*="menu-item"]',
+            '[class*="list-item"]',
+            'li', // Generic list items
+            'a',  // Generic anchor tags
+            'button' // Generic buttons
+        ];
+        
+        let target = null;
+        for (const selector of selList) {
+            // Only search within the dropdown menu, not the entire document
+            const elements = dropdownMenu.querySelectorAll(selector);
+            log(`🔍 Searching with selector "${selector}" in dropdown menu (found ${elements.length} elements)`);
+            
+            for (const element of elements) {
+                const text = (element.textContent || '').trim();
+                if (!text) continue;
+                
+                log(`🔍 Checking element: "${text}" (${element.tagName}.${element.className})`);
+                
+                if (text === recipientName || 
+                    text.includes(recipientName) || 
+                    text.toLowerCase().includes(recipientName.toLowerCase())) {
+                    target = element;
+                    log(`✅ Found recipient: "${text}" (matched "${recipientName}")`);
+                    break;
+                }
+            }
+            if (target) break;
+        }
+        
+        if (!target) {
+            log(`❌ Recipient "${recipientName}" not found in dropdown`);
+            return false;
+        }
+        
+        // Find clickable element (from ChatGPT working code)
+        let clickable = target;
+        let hops = 0;
+        while (hops < 5 && clickable && !isClickable(clickable)) {
+            clickable = clickable.parentElement;
+            hops++;
+            if (hops > 1) log(`🔍 Checking parent level ${hops}: ${clickable?.tagName}.${clickable?.className}`);
+        }
+        if (!clickable) clickable = target;
+        
+        log(`🎯 Using React-compatible event sequence on: ${clickable.tagName}.${clickable.className}`);
+        await selectMenuItemReacty(clickable, receiverWin);
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        // Verify selection via the receiver button in the same iframe
+        receiverBtn = receiverDoc.querySelector(
+            'button.chat-receiver-list__receiver, ' +
+            '[class*="chat-receiver"][role="button"], ' +
+            '[class*="chat-receiver"]'
+        );
+        
+        if (receiverBtn) {
+            const got = ((receiverBtn.textContent || receiverBtn.getAttribute('aria-label')) || '').trim();
+            const ok = got.toLowerCase().includes(recipientName.toLowerCase());
+            log(`🔎 Receiver now shows: "${got}" | matched=${ok}`);
+            
+            if (ok) {
+                log(`✅ Recipient selection successful for ${recipientName}`);
+                return true;
+            } else {
+                log(`⚠️ Recipient selection may have failed for ${recipientName}`);
+                return false;
+            }
+        } else {
+            log('⚠️ Could not verify recipient selection - receiver button not found');
+            return false;
+        }
     }
     
     // SIMPLIFIED: Extension user IS the monitor - no profile detection needed
     // Removed detectMonitorProfile function as it's unnecessary
+    
+    // DEBUG: Add click tracking to understand what elements need to be clicked
+    function addClickTracking() {
+        log('🔍 Adding click tracking for debugging...');
+        
+        // Track clicks on all elements
+        document.addEventListener('click', function(e) {
+            const target = e.target;
+            const text = target.textContent?.trim() || '';
+            const tagName = target.tagName;
+            const className = target.className;
+            const id = target.id;
+            
+            // Only log clicks on elements that might be relevant
+            if (text.includes('Everyone') || text.includes('Abhi') || 
+                className.includes('chat') || className.includes('recipient') || 
+                className.includes('participant') || className.includes('everyone')) {
+                log(`🖱️ CLICK TRACKED: ${tagName}.${className} (id: ${id}) - Text: "${text}"`);
+                
+                // Log the element's properties
+                log(`   Properties: role="${target.getAttribute('role')}", tabindex="${target.getAttribute('tabindex')}", onclick="${target.onclick ? 'yes' : 'no'}"`);
+                
+                // Log parent elements for context
+                let parent = target.parentElement;
+                let level = 1;
+                while (parent && level <= 3) {
+                    log(`   Parent ${level}: ${parent.tagName}.${parent.className}`);
+                    parent = parent.parentElement;
+                    level++;
+                }
+            }
+        }, true);
+        
+        // Also track clicks in iframes
+        const iframes = document.querySelectorAll('iframe');
+        iframes.forEach((iframe, index) => {
+            try {
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                iframeDoc.addEventListener('click', function(e) {
+                    const target = e.target;
+                    const text = target.textContent?.trim() || '';
+                    const tagName = target.tagName;
+                    const className = target.className;
+                    
+                    if (text.includes('Everyone') || text.includes('Abhi') || 
+                        className.includes('chat') || className.includes('recipient') || 
+                        className.includes('participant') || className.includes('everyone')) {
+                        log(`🖱️ IFRAME ${index + 1} CLICK TRACKED: ${tagName}.${className} - Text: "${text}"`);
+                    }
+                }, true);
+            } catch (e) {
+                log(`⚠️ Could not add click tracking to iframe ${index + 1}: ${e.message}`);
+            }
+        });
+        
+        log('✅ Click tracking added. Now manually click on the "Everyone" button and then on "Abhi 2" in the dropdown to see what elements are actually clickable.');
+    }
+    
+    // Manual trigger for click tracking (for testing)
+    function startClickTracking() {
+        log('🔍 Starting click tracking manually...');
+        addClickTracking();
+    }
     
     // Find the Participants tab and get participant list
     function findParticipantsList() {
@@ -1082,6 +1235,7 @@
             message = `Your camera has been off for ${durationSeconds} seconds. You have 20 seconds to turn it on or you'll be moved to a private room with a mentor.`;
         }
         
+        log(`📤 Attempting to send message: "${message}" to ${participantName}`);
         const success = await sendChatMessage(message, participantName);
         
         if (success) {
@@ -1270,6 +1424,9 @@
         }
         
         log('🚀 STARTING PARTICIPANT MONITORING...');
+        
+        // Add click tracking for debugging
+        addClickTracking();
         
         // Set global flag to prevent multiple instances
         window.ZoomWatchMonitoringStarted = true;
@@ -2468,6 +2625,91 @@
     });
     
     // Make functions available globally for debugging
+    
+    // Simple global function for testing
+    window.startClickTracking = function() {
+        console.log('🔍 Starting click tracking manually...');
+        addClickTracking();
+    };
+    
+    // Test function to verify extension is loaded
+    window.testZoomWatch = function() {
+        console.log('🧪 ZoomWatch extension test - Extension is loaded and working!');
+        console.log('📊 Current config:', config);
+        console.log('🔍 Is in meeting:', isInZoomMeeting());
+        return 'ZoomWatch extension is working!';
+    };
+    
+    // Debug function to see what's available
+    window.debugZoomWatch = function() {
+        console.log('🔍 Debugging ZoomWatch...');
+        console.log('Window functions:', Object.keys(window).filter(key => key.includes('Zoom') || key.includes('start') || key.includes('test')));
+        console.log('ZoomWatch object:', window.ZoomWatch);
+        console.log('startClickTracking function:', typeof window.startClickTracking);
+        console.log('testZoomWatch function:', typeof window.testZoomWatch);
+        console.log('addClickTracking function:', typeof addClickTracking);
+        console.log('isInZoomMeeting function:', typeof isInZoomMeeting);
+    };
+    
+    // Try multiple ways to expose functions
+    try {
+        // Method 1: Direct window assignment
+        window.startClickTracking2 = addClickTracking;
+        window.testZoomWatch2 = function() {
+            return testZoomWatch();
+        };
+        
+        // Method 2: Using Object.defineProperty
+        Object.defineProperty(window, 'startClickTracking3', {
+            value: addClickTracking,
+            writable: true,
+            configurable: true
+        });
+        
+        // Method 3: eval removed due to CSP restrictions
+        console.log('⚠️ eval method skipped due to CSP restrictions');
+        
+        console.log('🔍 Multiple exposure methods attempted');
+        console.log('startClickTracking2:', typeof window.startClickTracking2);
+        console.log('startClickTracking3:', typeof window.startClickTracking3);
+        console.log('startClickTracking4:', typeof window.startClickTracking4);
+    } catch (e) {
+        console.log('❌ Error with multiple exposure methods:', e.message);
+    }
+    
+    // Immediate test to see if functions are created
+    console.log('🔍 Creating global functions...');
+    console.log('startClickTracking created:', typeof window.startClickTracking);
+    console.log('testZoomWatch created:', typeof window.testZoomWatch);
+    console.log('debugZoomWatch created:', typeof window.debugZoomWatch);
+    
+    // Test if we can call the functions directly
+    try {
+        console.log('🔍 Testing direct function calls...');
+        if (typeof addClickTracking === 'function') {
+            console.log('✅ addClickTracking function exists');
+        } else {
+            console.log('❌ addClickTracking function does not exist');
+        }
+        
+        if (typeof isInZoomMeeting === 'function') {
+            console.log('✅ isInZoomMeeting function exists');
+        } else {
+            console.log('❌ isInZoomMeeting function does not exist');
+        }
+        
+        // Test if debugExtensionContext exists
+        if (typeof debugExtensionContext === 'function') {
+            console.log('✅ debugExtensionContext function exists');
+            // Call it to see the context
+            debugExtensionContext();
+        } else {
+            console.log('❌ debugExtensionContext function does not exist');
+        }
+    } catch (e) {
+        console.log('❌ Error testing functions:', e.message);
+    }
+    
     window.ZoomWatch = {
         startMonitoring,
         stopMonitoring,
@@ -2515,10 +2757,17 @@
         analyzePanels: () => analyzePanels(),
         interceptZoomEvents: () => interceptZoomEvents(),
         findZoomAPIs: () => findZoomAPIs(),
+        startClickTracking: () => startClickTracking(), // Add click tracking function
         version: '3.0.0'
     };
     
     // === ZOOM INTERFACE REVERSE ENGINEERING FUNCTIONS ===
+    
+    // Simple test that runs immediately
+    console.log('🔍 IMMEDIATE TEST - Script execution started');
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('Window object exists:', typeof window !== 'undefined');
+    console.log('Document object exists:', typeof document !== 'undefined');
     
     // Comprehensive Zoom interface exploration
     function exploreZoomInterface() {
@@ -2852,6 +3101,17 @@
         return finalResult;
     }
     
+    // Debug function to check extension context
+    function debugExtensionContext() {
+        console.log('🔍 === EXTENSION CONTEXT DEBUG ===');
+        console.log('Current URL:', window.location.href);
+        console.log('Is in iframe:', window !== window.top);
+        console.log('Is in Zoom meeting:', isInZoomMeeting());
+        console.log('Frame type:', window === window.top ? 'MAIN FRAME' : 'IFRAME');
+        console.log('Extension loaded at:', new Date().toISOString());
+        console.log('=== END EXTENSION CONTEXT DEBUG ===');
+    }
+    
     // Debug function to show all chat-related buttons
     function debugChatButtons() {
         log('🔍 === CHAT BUTTONS DEBUG ===');
@@ -2973,6 +3233,396 @@
         }
     }
     
+    // Find clickable parent element
+    function findClickableParent(element, maxLevels = 5) {
+        let current = element;
+        let level = 0;
+        
+        while (current && level < maxLevels) {
+            // Check if current element is clickable
+            if (isElementClickable(current)) {
+                return current;
+            }
+            
+            // Move to parent
+            current = current.parentElement;
+            level++;
+        }
+        
+        return null;
+    }
+    
+    // Check if an element is clickable
+    function isElementClickable(element) {
+        return element.onclick || 
+               element.getAttribute('role') === 'button' || 
+               element.getAttribute('tabindex') !== null ||
+               element.tagName === 'BUTTON' ||
+               element.tagName === 'A' ||
+               element.className.includes('clickable') ||
+               element.className.includes('selectable') ||
+               element.className.includes('item') ||
+               element.className.includes('option') ||
+               element.className.includes('menu-item') ||
+               element.className.includes('list-item');
+    }
+    
+    // React-compatible event sequence for Zoom's dropdown menus
+    async function selectMenuItemReacty(el, win) {
+        const w = win || window;
+        // Bring into view & focus — React often checks focus/hover
+        el.scrollIntoView({ block: 'nearest' });
+        try { el.focus({ preventScroll: true }); } catch {}
+
+        const seq = [
+            ['pointerover', {bubbles:true}],
+            ['mouseover',   {bubbles:true}],
+            ['pointerdown', {bubbles:true, button:0}],
+            ['mousedown',   {bubbles:true, button:0}],
+            ['pointerup',   {bubbles:true, button:0}],
+            ['mouseup',     {bubbles:true, button:0}],
+            ['click',       {bubbles:true, button:0}],
+            // Some Zoom builds commit via keyboard:
+            ['keydown',     {bubbles:true, key:'Enter', code:'Enter', keyCode:13, which:13}],
+            ['keyup',       {bubbles:true, key:'Enter', code:'Enter', keyCode:13, which:13}],
+        ];
+
+        for (const [type, opts] of seq) {
+            const Ctor = type.startsWith('key') ? w.KeyboardEvent : (type.startsWith('pointer') ? w.PointerEvent : w.MouseEvent);
+            el.dispatchEvent(new Ctor(type, Object.assign({ cancelable:true, view:w }, opts)));
+            await new Promise(r => setTimeout(r, 30));
+        }
+    }
+
+    // Find the iframe that owns the chat receiver button
+    function findReceiverOwnerIframe() {
+        for (const iframe of document.querySelectorAll('iframe')) {
+            try {
+                const d = iframe.contentDocument || iframe.contentWindow.document;
+                if (d.querySelector('button.chat-receiver-list__receiver, [class*="chat-receiver"][role="button"], .chat-rtf-box [contenteditable="true"]')) {
+                    return { iframe, doc: d, win: iframe.contentWindow };
+                }
+            } catch {}
+        }
+        return { iframe: null, doc: document, win: window }; // fallback
+    }
+
+    // ProseMirror-compatible text setting for chat inputs
+    function setProseMirrorText(editableEl, text) {
+        try {
+            editableEl.focus();
+            
+            // Method 1: Try execCommand (legacy but sometimes works)
+            try {
+                editableEl.execCommand('selectAll', false, null);
+                editableEl.execCommand('insertText', false, text);
+                log('✅ Used execCommand method for text input');
+            } catch (e) {
+                log('⚠️ execCommand failed, trying alternative methods');
+            }
+            
+            // Method 2: Direct textContent assignment (for contenteditable)
+            if (editableEl.isContentEditable) {
+                editableEl.textContent = text;
+                log('✅ Used textContent method for contenteditable');
+            } else if (editableEl.value !== undefined) {
+                editableEl.value = text;
+                log('✅ Used value method for input element');
+            }
+            
+            // Method 3: Dispatch input event to trigger React state update
+            editableEl.dispatchEvent(new InputEvent('input', { 
+                bubbles: true, 
+                inputType: 'insertText', 
+                data: text 
+            }));
+            
+            // Method 4: Also try change event
+            editableEl.dispatchEvent(new Event('change', { bubbles: true }));
+            
+            log(`✅ Text "${text}" set in chat input`);
+            
+        } catch (error) {
+            log(`❌ Error setting text: ${error.message}`);
+            // Fallback: just set text content directly
+            if (editableEl.isContentEditable) {
+                editableEl.textContent = text;
+            } else if (editableEl.value !== undefined) {
+                editableEl.value = text;
+            }
+        }
+    }
+
+    // Check if element is clickable (from ChatGPT working code)
+    function isClickable(el) {
+        if (!el) return false;
+        const role = (el.getAttribute('role') || '').toLowerCase();
+        const cls = el.className || '';
+        return (
+            el.onclick ||
+            role === 'button' ||
+            el.getAttribute('tabindex') !== null ||
+            el.tagName === 'BUTTON' ||
+            el.tagName === 'A' ||
+            cls.includes('clickable') ||
+            cls.includes('selectable') ||
+            cls.includes('menu-item') ||
+            cls.includes('list-item') ||
+            cls.includes('option')
+        );
+    }
+
+    // Try multiple click strategies based on our click tracking discoveries
+    async function tryMultipleClickStrategies(element) {
+        log(`🎯 Trying multiple click strategies for element: ${element.tagName}.${element.className}`);
+        
+        let anyStrategyWorked = false;
+        
+        // Strategy 1: Direct click
+        try {
+            log('🔍 Strategy 1: Direct click');
+            element.click();
+            await new Promise(resolve => setTimeout(resolve, 200));
+            anyStrategyWorked = true;
+            log('✅ Strategy 1 completed');
+        } catch (e) {
+            log(`❌ Strategy 1 failed: ${e.message}`);
+        }
+        
+        // Strategy 2: MouseEvent dispatch (more realistic)
+        try {
+            log('🔍 Strategy 2: MouseEvent dispatch');
+            const clickEvent = new MouseEvent('click', {
+                bubbles: true,
+                cancelable: true,
+                view: window
+            });
+            element.dispatchEvent(clickEvent);
+            await new Promise(resolve => setTimeout(resolve, 200));
+            anyStrategyWorked = true;
+            log('✅ Strategy 2 completed');
+        } catch (e) {
+            log(`❌ Strategy 2 failed: ${e.message}`);
+        }
+        
+        // Strategy 3: Click on parent container (based on our click tracking)
+        try {
+            log('🔍 Strategy 3: Click on parent container');
+            const parent = element.parentElement;
+            if (parent) {
+                parent.click();
+                await new Promise(resolve => setTimeout(resolve, 200));
+                anyStrategyWorked = true;
+                log('✅ Strategy 3 completed');
+            }
+        } catch (e) {
+            log(`❌ Strategy 3 failed: ${e.message}`);
+        }
+        
+        // Strategy 4: Find and click on the actual clickable element
+        try {
+            log('🔍 Strategy 4: Find actual clickable element');
+            const clickableElement = findClickableParent(element, 3);
+            if (clickableElement) {
+                clickableElement.click();
+                await new Promise(resolve => setTimeout(resolve, 200));
+                anyStrategyWorked = true;
+                log('✅ Strategy 4 completed');
+            }
+        } catch (e) {
+            log(`❌ Strategy 4 failed: ${e.message}`);
+        }
+        
+        // Strategy 5: Try to trigger React events (Zoom's internal system)
+        try {
+            log('🔍 Strategy 5: Trigger React events');
+            
+            // Create a more comprehensive event that React might recognize
+            const reactEvent = new MouseEvent('mousedown', {
+                bubbles: true,
+                cancelable: true,
+                view: window,
+                detail: 1,
+                button: 0
+            });
+            
+            // Dispatch mousedown first, then click
+            element.dispatchEvent(reactEvent);
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            const reactClickEvent = new MouseEvent('click', {
+                bubbles: true,
+                cancelable: true,
+                view: window,
+                detail: 1,
+                button: 0
+            });
+            
+            element.dispatchEvent(reactClickEvent);
+            await new Promise(resolve => setTimeout(resolve, 200));
+            anyStrategyWorked = true;
+            log('✅ Strategy 5 completed');
+        } catch (e) {
+            log(`❌ Strategy 5 failed: ${e.message}`);
+        }
+        
+        // Strategy 6: Try to find and trigger the actual React component
+        try {
+            log('🔍 Strategy 6: Find React component and trigger');
+            
+            // Look for React internal properties
+            const reactKey = Object.keys(element).find(key => key.startsWith('__reactProps$') || key.startsWith('__reactFiber$'));
+            if (reactKey) {
+                log(`🔍 Found React property: ${reactKey}`);
+                
+                // Try to access React's internal event handlers
+                const reactProps = element[reactKey];
+                if (reactProps && reactProps.onClick) {
+                    log('🔍 Triggering React onClick handler directly!');
+                    reactProps.onClick(new MouseEvent('click'));
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    anyStrategyWorked = true;
+                    log('✅ Strategy 6 completed');
+                }
+            } else {
+                log('🔍 No React properties found on element');
+            }
+        } catch (e) {
+            log(`❌ Strategy 6 failed: ${e.message}`);
+        }
+        
+        // Strategy 7: Try to find the exact menuitemradio element from click tracking
+        try {
+            log('🔍 Strategy 7: Find exact menuitemradio element');
+            
+            // Look for the exact element we saw in click tracking
+            const menuitemElements = document.querySelectorAll('[role="menuitemradio"]');
+            log(`🔍 Found ${menuitemElements.length} menuitemradio elements`);
+            
+            for (const menuitem of menuitemElements) {
+                const text = menuitem.textContent?.trim() || '';
+                if (text === 'Abhi 2') {
+                    log(`🎯 FOUND EXACT MENUITEM ELEMENT: ${menuitem.tagName}.${menuitem.className}`);
+                    
+                    // Try to trigger the actual React event
+                    try {
+                        // Look for React internal properties
+                        const reactKey = Object.keys(menuitem).find(key => key.startsWith('__reactProps$'));
+                        if (reactKey) {
+                            log(`🔍 Found React property: ${reactKey}`);
+                            const reactProps = menuitem[reactKey];
+                            
+                            if (reactProps && reactProps.onClick) {
+                                log('🔍 Triggering React onClick directly!');
+                                reactProps.onClick(new MouseEvent('click'));
+                                await new Promise(resolve => setTimeout(resolve, 500));
+                                anyStrategyWorked = true;
+                                log('✅ Strategy 7 React onClick triggered!');
+                                break;
+                            }
+                        }
+                        
+                        // If no React props, try comprehensive event dispatch
+                        log('🔍 No React props, trying comprehensive event dispatch...');
+                        const events = ['mousedown', 'mouseup', 'click'];
+                        for (const eventType of events) {
+                            const event = new MouseEvent(eventType, {
+                                bubbles: true,
+                                cancelable: true,
+                                view: window,
+                                detail: 1,
+                                button: 0
+                            });
+                            menuitem.dispatchEvent(event);
+                            log(`✅ Dispatched ${eventType} event`);
+                            await new Promise(resolve => setTimeout(resolve, 100));
+                        }
+                        anyStrategyWorked = true;
+                        log('✅ Strategy 7 comprehensive events completed');
+                    } catch (e) {
+                        log(`❌ Strategy 7 React handling failed: ${e.message}`);
+                    }
+                }
+            }
+        } catch (e) {
+            log(`❌ Strategy 7 failed: ${e.message}`);
+        }
+        
+        if (anyStrategyWorked) {
+            log('✅ At least one strategy completed successfully');
+            return true;
+        } else {
+            log('❌ All click strategies failed');
+            return false;
+        }
+    }
+    
     log('✅ ZoomWatch content script loaded and ready!');
+    
+    // Immediate inline test
+    console.log('🔍 INLINE TEST - Extension just loaded');
+    console.log('Functions available:', {
+        startClickTracking: typeof window.startClickTracking,
+        testZoomWatch: typeof window.testZoomWatch,
+        debugZoomWatch: typeof window.debugZoomWatch,
+        ZoomWatch: typeof window.ZoomWatch
+    });
+    
+    // Basic test to see if the script is running at all
+    console.log('🔍 BASIC TEST - Script is running');
+    console.log('Current URL:', window.location.href);
+    console.log('Is in iframe:', window !== window.top);
+    console.log('Document ready state:', document.readyState);
+    
+    // Call the debug function to see extension context
+    debugExtensionContext();
+    
+    // Automatically start click tracking for debugging
+    console.log('🔍 Auto-starting click tracking...');
+    setTimeout(() => {
+        try {
+            addClickTracking();
+            console.log('✅ Click tracking started automatically!');
+            console.log('🎯 Now click on the "Everyone" button and then on a participant name to see what gets logged');
+        } catch (e) {
+            console.log('❌ Error starting click tracking:', e.message);
+        }
+    }, 2000); // Wait 2 seconds for everything to load
+    
+    // Add a simple check to verify the extension is working
+    setTimeout(() => {
+        console.log('🔍 Checking global functions...');
+        console.log('startClickTracking:', typeof window.startClickTracking);
+        console.log('testZoomWatch:', typeof window.testZoomWatch);
+        console.log('debugZoomWatch:', typeof window.debugZoomWatch);
+        console.log('ZoomWatch object:', typeof window.ZoomWatch);
+        
+        if (window.startClickTracking) {
+            console.log('✅ Global functions are available');
+        } else {
+            console.log('❌ Global functions are not available');
+        }
+        
+        if (window.ZoomWatch) {
+            console.log('✅ ZoomWatch object is available');
+        } else {
+            log('❌ ZoomWatch object is not available');
+        }
+        
+        // Try to create a simple test function in the main frame
+        try {
+            window.testSimpleFunction = function() {
+                console.log('🎯 Simple test function works!');
+                return 'SUCCESS';
+            };
+            console.log('✅ Created testSimpleFunction:', typeof window.testSimpleFunction);
+            
+            // Test calling it
+            const result = window.testSimpleFunction();
+            console.log('✅ Called testSimpleFunction, result:', result);
+        } catch (e) {
+            console.log('❌ Error creating test function:', e.message);
+        }
+    }, 1000);
     
 })();
