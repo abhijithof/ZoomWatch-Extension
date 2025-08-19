@@ -675,10 +675,43 @@
     async function selectChatRecipient(participantName) {
         log(`👤 Selecting chat recipient: ${participantName}`);
         
-        // Look for the "To:" field in chat
-        const toField = document.querySelector('[data-testid="chat-to-field"], .chat-to-field, [class*="chat-to"], [class*="recipient"]');
+        // ENHANCED: Look for the "To:" field in chat with multiple specific selectors
+        const toFieldSelectors = [
+            // Primary selectors based on Zoom's actual interface
+            '[data-testid="chat-to-field"]',
+            '.chat-to-field',
+            '[class*="chat-to"]',
+            '[class*="recipient"]',
+            // Additional selectors for Zoom's chat interface
+            '[placeholder*="To:"]',
+            '[placeholder*="to:"]',
+            '[aria-label*="To:"]',
+            '[aria-label*="to:"]',
+            // Generic input fields in chat area
+            '.chat-panel input',
+            '.chat-panel textarea',
+            '[class*="chat"] input',
+            '[class*="chat"] textarea'
+        ];
+        
+        let toField = null;
+        for (const selector of toFieldSelectors) {
+            toField = document.querySelector(selector);
+            if (toField) {
+                log(`✅ Found chat recipient field with selector: ${selector}`);
+                break;
+            }
+        }
+        
         if (!toField) {
-            log('❌ Chat recipient field not found');
+            log('❌ Chat recipient field not found with any selector');
+            log('🔍 Available chat elements:');
+            const chatElements = document.querySelectorAll('[class*="chat"], [class*="message"], [class*="input"]');
+            chatElements.forEach((el, i) => {
+                if (i < 5) { // Log first 5 to avoid spam
+                    log(`   ${i+1}: ${el.tagName}.${el.className}`);
+                }
+            });
             return false;
         }
         
@@ -687,26 +720,73 @@
         log('✅ Clicked recipient field');
         
         // Wait for recipient dropdown to appear
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Increased wait time
         
-        // Look for the participant in the dropdown
-        const participantOption = document.querySelector(`[data-testid*="${participantName}"], [class*="${participantName}"], [title*="${participantName}"]`);
+        // ENHANCED: Look for the participant in the dropdown with multiple methods
+        const participantSelectors = [
+            // Direct name matching
+            `[data-testid*="${participantName}" i]`,
+            `[class*="${participantName}" i]`,
+            `[title*="${participantName}" i]`,
+            `[aria-label*="${participantName}" i]`,
+            // Text content matching
+            `*:contains("${participantName}")`,
+            // Generic participant options
+            '[class*="participant-option"]',
+            '[class*="recipient-option"]',
+            '[class*="chat-option"]'
+        ];
+        
+        let participantOption = null;
+        for (const selector of participantSelectors) {
+            try {
+                participantOption = document.querySelector(selector);
+                if (participantOption) {
+                    log(`✅ Found participant option with selector: ${selector}`);
+                    break;
+                }
+            } catch (e) {
+                // Skip invalid selectors
+            }
+        }
+        
         if (participantOption) {
             participantOption.click();
             log(`✅ Selected recipient: ${participantName}`);
             return true;
         }
         
-        // Try alternative method: look for "Everyone" button first
-        const everyoneButton = document.querySelector('button[aria-label*="everyone" i], button[title*="everyone" i], [class*="everyone"]');
+        // ENHANCED: Try alternative method: look for "Everyone" button with multiple selectors
+        const everyoneSelectors = [
+            'button[aria-label*="everyone" i]',
+            'button[title*="everyone" i]',
+            '[class*="everyone"]',
+            '[class*="all"]',
+            'button:contains("Everyone")',
+            'button:contains("All")'
+        ];
+        
+        let everyoneButton = null;
+        for (const selector of everyoneSelectors) {
+            try {
+                everyoneButton = document.querySelector(selector);
+                if (everyoneButton) {
+                    log(`✅ Found Everyone button with selector: ${selector}`);
+                    break;
+                }
+            } catch (e) {
+                // Skip invalid selectors
+            }
+        }
+        
         if (everyoneButton) {
-            log('✅ Found Everyone button, using it as fallback');
+            log('✅ Using Everyone button as fallback');
             everyoneButton.click();
             return true;
         }
         
-        log('❌ Could not select specific recipient, using Everyone');
-        return true; // Allow sending to everyone as fallback
+        log('❌ Could not select specific recipient or Everyone button');
+        return false;
     }
     
     // Send chat message
@@ -714,25 +794,109 @@
         log(`💬 Sending chat message: "${message}"`);
         
         try {
-            // Find the chat input field
-            const chatInput = document.querySelector('[data-testid="chat-input"], .chat-input, [class*="chat-input"], textarea[placeholder*="chat" i]');
+            // ENHANCED: Find the chat input field with multiple selectors
+            const chatInputSelectors = [
+                // Primary selectors
+                '[data-testid="chat-input"]',
+                '.chat-input',
+                '[class*="chat-input"]',
+                // Placeholder-based selectors
+                'textarea[placeholder*="chat" i]',
+                'input[placeholder*="chat" i]',
+                'textarea[placeholder*="message" i]',
+                'input[placeholder*="message" i]',
+                // Generic chat input fields
+                '.chat-panel textarea',
+                '.chat-panel input',
+                '[class*="chat"] textarea',
+                '[class*="chat"] input',
+                // Fallback: any textarea in chat area
+                'textarea',
+                'input[type="text"]'
+            ];
+            
+            let chatInput = null;
+            for (const selector of chatInputSelectors) {
+                chatInput = document.querySelector(selector);
+                if (chatInput) {
+                    log(`✅ Found chat input field with selector: ${selector}`);
+                    break;
+                }
+            }
+            
             if (!chatInput) {
-                log('❌ Chat input field not found');
+                log('❌ Chat input field not found with any selector');
+                log('🔍 Available input elements:');
+                const inputElements = document.querySelectorAll('input, textarea');
+                inputElements.forEach((el, i) => {
+                    if (i < 5) { // Log first 5 to avoid spam
+                        log(`   ${i+1}: ${el.tagName}.${el.className} - placeholder: "${el.placeholder}"`);
+                    }
+                });
                 return false;
             }
             
-            // Type the message
+            // Clear any existing text and type the message
+            chatInput.value = '';
+            chatInput.focus();
             chatInput.value = message;
-            chatInput.dispatchEvent(new Event('input', { bubbles: true }));
             
-            // Find and click send button
-            const sendButton = document.querySelector('button[aria-label*="send" i], button[title*="send" i], [class*="send"]');
+            // Trigger input events to ensure Zoom recognizes the text
+            chatInput.dispatchEvent(new Event('input', { bubbles: true }));
+            chatInput.dispatchEvent(new Event('change', { bubbles: true }));
+            chatInput.dispatchEvent(new Event('keyup', { bubbles: true }));
+            
+            log('✅ Message typed into input field');
+            
+            // ENHANCED: Find and click send button with multiple selectors
+            const sendButtonSelectors = [
+                // Primary selectors
+                'button[aria-label*="send" i]',
+                'button[title*="send" i]',
+                '[class*="send"]',
+                // Icon-based selectors
+                'button[class*="send-icon"]',
+                'button[class*="send-button"]',
+                // Generic send buttons
+                'button:contains("Send")',
+                'button:contains("send")',
+                // Fallback: look for any button in chat area
+                '.chat-panel button',
+                '[class*="chat"] button'
+            ];
+            
+            let sendButton = null;
+            for (const selector of sendButtonSelectors) {
+                try {
+                    sendButton = document.querySelector(selector);
+                    if (sendButton) {
+                        log(`✅ Found send button with selector: ${selector}`);
+                        break;
+                    }
+                } catch (e) {
+                    // Skip invalid selectors
+                }
+            }
+            
             if (!sendButton) {
-                log('❌ Send button not found');
+                log('❌ Send button not found with any selector');
+                log('🔍 Available buttons in chat area:');
+                const chatButtons = document.querySelectorAll('.chat-panel button, [class*="chat"] button, button');
+                chatButtons.forEach((btn, i) => {
+                    if (i < 5) { // Log first 5 to avoid spam
+                        log(`   ${i+1}: ${btn.tagName}.${btn.className} - aria-label: "${btn.getAttribute('aria-label')}" - text: "${btn.textContent}"`);
+                    }
+                });
                 return false;
             }
             
+            // Click the send button
             sendButton.click();
+            log('✅ Send button clicked');
+            
+            // Wait a moment for the message to be sent
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
             log('✅ Message sent successfully');
             return true;
             
