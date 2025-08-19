@@ -78,6 +78,61 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
   }
   
+  // Handle warning messages
+  if (message.type === 'ZOOM_WARNING_SENT') {
+    console.log('Warning sent:', message.data);
+    
+    // Store warning data
+    chrome.storage.local.set({
+      lastWarning: {
+        timestamp: Date.now(),
+        data: message.data
+      }
+    });
+    
+    // Show notification for warnings
+    const { participant, level, duration } = message.data;
+    chrome.notifications.create({
+      type: 'basic',
+      title: `ZoomWatch ${level.toUpperCase()} Warning`,
+      message: `Warning sent to ${participant} (camera off for ${duration}s)`,
+      iconUrl: 'icon.png' // Optional: add icon
+    });
+  }
+  
+  // Handle reminder messages (legacy)
+  if (message.type === 'ZOOM_REMINDER') {
+    console.log('Reminder sent:', message.data);
+    
+    chrome.notifications.create({
+      type: 'basic',
+      title: 'ZoomWatch Reminder',
+      message: message.data.message
+    });
+  }
+  
+  // Handle private room requests (placeholder functionality)
+  if (message.type === 'ZOOM_PRIVATE_ROOM_REQUEST') {
+    console.log('Private room request:', message.data);
+    
+    // Store request data
+    chrome.storage.local.set({
+      lastPrivateRoomRequest: {
+        timestamp: Date.now(),
+        data: message.data
+      }
+    });
+    
+    // Show urgent notification for private room assignment
+    chrome.notifications.create({
+      type: 'basic',
+      title: '🏠 ZoomWatch: Private Room Required',
+      message: `${message.data.participant} needs mentor assignment - camera off for 50+ seconds`,
+      iconUrl: 'icon.png',
+      requireInteraction: true // Make notification persist until clicked
+    });
+  }
+  
   // Handle ping messages
   if (message.type === 'ZOOMWATCH_PING') {
     console.log('Received ping from content script');

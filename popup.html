@@ -84,6 +84,31 @@
             </button>
         </div>
 
+        <!-- Auto-Warning Controls -->
+        <div class="warning-controls">
+            <div class="section-header">
+                <h3>Auto-Warning System</h3>
+                <div class="warning-toggle">
+                    <input type="checkbox" id="autoWarningsToggle" checked>
+                    <label for="autoWarningsToggle" class="toggle-label">
+                        <span class="toggle-switch"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="warning-stats">
+                <div class="warning-stat">
+                    <span class="warning-icon">🚨</span>
+                    <span id="warningsSentCount">0</span>
+                    <span class="warning-label">Warnings Sent</span>
+                </div>
+                <div class="warning-stat">
+                    <span class="warning-icon">👤</span>
+                    <span id="monitorProfile">Extension User</span>
+                    <span class="warning-label">Monitor Profile</span>
+                </div>
+            </div>
+        </div>
+
         <!-- Participants List -->
         <div class="participants-section" id="participantsSection" style="display: none;">
             <div class="section-header">
@@ -97,13 +122,21 @@
             </div>
         </div>
 
+        <!-- Recent Warnings -->
+        <div class="warnings-section" id="warningsSection" style="display: none;">
+            <div class="section-header">
+                <h3>Recent Warnings</h3>
+                <span class="warning-count" id="warningCount">0</span>
+            </div>
+            <div class="warnings-list" id="warningsList">
+                <!-- Warnings will be populated here -->
+            </div>
+        </div>
+
         <!-- Quick Actions -->
         <div class="quick-actions">
             <button id="refreshBtn" class="action-btn" title="Refresh Data">
                 <span>🔄</span>
-            </button>
-            <button id="debugBtn" class="action-btn" title="Debug Console">
-                <span>🔍</span>
             </button>
             <button id="settingsBtn" class="action-btn" title="Settings">
                 <span>⚙️</span>
@@ -113,7 +146,7 @@
         <!-- Footer -->
         <div class="footer">
             <div class="version-info">
-                <span>v1.0.0</span>
+                <span>v3.0.0</span>
                 <span class="separator">•</span>
                 <span id="updateTime">Just now</span>
             </div>
