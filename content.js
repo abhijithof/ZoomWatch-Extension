@@ -1709,9 +1709,7 @@
         return false;
     }
     
-        return true;
-    }
-    
+    // Debug participant selector in chat
     }
     
     // Stop monitoring
@@ -1731,13 +1729,13 @@
     
     // Pause monitoring
     function pauseMonitoring() {
-        log('⏸️ PAUSING PARTICIPANT MONITORING...');
+        log('PAUSE: PAUSING PARTICIPANT MONITORING...');
         isPaused = true;
     }
     
     // Resume monitoring
     function resumeMonitoring() {
-        log('▶️ RESUMING PARTICIPANT MONITORING...');
+        log('RESUME: RESUMING PARTICIPANT MONITORING...');
         isPaused = false;
     }
         
@@ -1848,7 +1846,7 @@
                 (async () => {
                     try {
                         log('INFO: DEBUG: Function exists, calling it...');
-                
+                        log('INFO: DEBUG: Function type: ' + typeof debugParticipantSelector);
                         if (typeof debugParticipantSelector === 'function') {
                             const result = await debugParticipantSelector();
                             log(`INFO: DEBUG: debugParticipantSelector returned: ${result}`);
@@ -1998,7 +1996,7 @@
         analyzePanels: () => analyzePanels(),
         interceptZoomEvents: () => interceptZoomEvents(),
         findZoomAPIs: () => findZoomAPIs(),
-        startClickTracking: () => startClickTracking(), // Add click tracking function
+
         version: '3.0.0'
     };
     
@@ -2016,7 +2014,7 @@
         
         // Find all buttons and clickable elements
         const buttons = document.querySelectorAll('button, [role="button"], .clickable, [onclick]');
-        log(`📱 Found ${buttons.length} clickable elements`);
+        log(`BUTTONS: Found ${buttons.length} clickable elements`);
         
         const interestingButtons = [];
         buttons.forEach((btn, i) => {
@@ -2261,8 +2259,6 @@
         return { zoomObjects, apiHints };
     }
     
-    }
-    
     // Check if we're in a Zoom meeting context
     function isInZoomMeeting() {
         const url = window.location.href;
@@ -2291,19 +2287,8 @@
         
         return finalResult;
     }
-    
-    
     }
     
-    // Force select recipient by clicking directly on participant list
-    async function forceSelectRecipient(recipientName) {
-        log(`TARGET: Force selecting recipient: ${recipientName}`);
-        
-        try {
-            // First, ensure chat panel is open
-            if (!openChatPanel()) {
-                log('ERROR: Cannot force select recipient: Chat panel not open');
-                return false;
             }
             
             // Wait for chat panel to load
@@ -2676,9 +2661,7 @@
     // Immediate inline test
     console.log('INFO: INLINE TEST - Extension just loaded');
     console.log('Functions available:', {
-        startClickTracking: typeof window.startClickTracking,
-        testZoomWatch: typeof window.testZoomWatch,
-        debugZoomWatch: typeof window.debugZoomWatch,
+
         ZoomWatch: typeof window.ZoomWatch
     });
     
@@ -2729,7 +2712,7 @@
                 console.log('TARGET: Simple test function works!');
                 return 'SUCCESS';
             };
-    
+            console.log('SUCCESS: Created testSimpleFunction:', typeof window.testSimpleFunction);
             
             // Test calling it
             const result = window.testSimpleFunction();
