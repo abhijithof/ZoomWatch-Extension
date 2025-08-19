@@ -398,6 +398,13 @@
     
     // Extract participant name from an item
     function extractParticipantName(item) {
+        // CRITICAL: Check if this participant is the monitor (extension user)
+        const ariaLabel = item.getAttribute('aria-label') || '';
+        if (ariaLabel.includes('(me)') || ariaLabel.includes('(Host, me)')) {
+            log(`🚫 Skipping monitor: "${ariaLabel}"`);
+            return null; // Return null to exclude monitor from participants
+        }
+        
         // Look for name elements using the exact selectors from your HTML
         const nameSelectors = [
             '.participants-item__display-name',
@@ -541,6 +548,11 @@
         if (config.enableAutoReminders && camerasOff > 0) {
             checkAndSendReminders(participants.length, camerasOff);
         }
+        
+        // Check and send automated warnings to participants with cameras off
+        if (camerasOff > 0) {
+            checkAndSendAutomatedWarnings();
+        }
     }
     
     // Send summary data to popup
@@ -586,6 +598,147 @@
             });
         } catch (error) {
             log(`❌ Error sending reminder: ${error.message}`);
+        }
+    }
+    
+    // Check and send automated warnings to participants with cameras off
+    async function checkAndSendAutomatedWarnings() {
+        log('🚨 Checking for participants with cameras off to send warnings...');
+        
+        // Get current participants data
+        const participantsList = findParticipantsList();
+        if (!participantsList) {
+            log('❌ No participants list found for warnings');
+            return;
+        }
+        
+        const participants = parseParticipants(participantsList);
+        if (participants.length === 0) {
+            log('❌ No participants found for warnings');
+            return;
+        }
+        
+        // Filter out participants with cameras off (excluding monitor)
+        const camerasOffParticipants = participants.filter(p => !p.cameraOn && p.name);
+        
+        if (camerasOffParticipants.length === 0) {
+            log('✅ All participants have cameras on, no warnings needed');
+            return;
+        }
+        
+        log(`🚨 Found ${camerasOffParticipants.length} participants with cameras off`);
+        
+        // Send warnings to each participant
+        for (const participant of camerasOffParticipants) {
+            try {
+                const success = await sendWarningToParticipant(participant.name);
+                if (success) {
+                    log(`✅ Warning sent to ${participant.name}`);
+                } else {
+                    log(`❌ Failed to send warning to ${participant.name}`);
+                }
+            } catch (error) {
+                log(`❌ Error sending warning to ${participant.name}: ${error.message}`);
+            }
+        }
+    }
+    
+    // Send warning message to a specific participant
+    async function sendWarningToParticipant(participantName) {
+        log(`📤 Attempting to send warning to ${participantName}...`);
+        
+        try {
+            // First, select the participant in chat
+            const recipientSelected = await selectChatRecipient(participantName);
+            if (!recipientSelected) {
+                log(`❌ Failed to select recipient ${participantName} - ABORTING message send`);
+                return false;
+            }
+            
+            // Send the warning message
+            const messageSent = await sendChatMessage(`Hi ${participantName}, please turn on your camera. It's important for meeting engagement.`);
+            if (!messageSent) {
+                log(`❌ Failed to send warning message to ${participantName}`);
+                return false;
+            }
+            
+            log(`✅ Warning message sent to ${participantName}`);
+            return true;
+            
+        } catch (error) {
+            log(`❌ Error in sendWarningToParticipant: ${error.message}`);
+            return false;
+        }
+    }
+    
+    // Select chat recipient (participant)
+    async function selectChatRecipient(participantName) {
+        log(`👤 Selecting chat recipient: ${participantName}`);
+        
+        // Look for the "To:" field in chat
+        const toField = document.querySelector('[data-testid="chat-to-field"], .chat-to-field, [class*="chat-to"], [class*="recipient"]');
+        if (!toField) {
+            log('❌ Chat recipient field not found');
+            return false;
+        }
+        
+        // Click on the field to open recipient selection
+        toField.click();
+        log('✅ Clicked recipient field');
+        
+        // Wait for recipient dropdown to appear
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Look for the participant in the dropdown
+        const participantOption = document.querySelector(`[data-testid*="${participantName}"], [class*="${participantName}"], [title*="${participantName}"]`);
+        if (participantOption) {
+            participantOption.click();
+            log(`✅ Selected recipient: ${participantName}`);
+            return true;
+        }
+        
+        // Try alternative method: look for "Everyone" button first
+        const everyoneButton = document.querySelector('button[aria-label*="everyone" i], button[title*="everyone" i], [class*="everyone"]');
+        if (everyoneButton) {
+            log('✅ Found Everyone button, using it as fallback');
+            everyoneButton.click();
+            return true;
+        }
+        
+        log('❌ Could not select specific recipient, using Everyone');
+        return true; // Allow sending to everyone as fallback
+    }
+    
+    // Send chat message
+    async function sendChatMessage(message) {
+        log(`💬 Sending chat message: "${message}"`);
+        
+        try {
+            // Find the chat input field
+            const chatInput = document.querySelector('[data-testid="chat-input"], .chat-input, [class*="chat-input"], textarea[placeholder*="chat" i]');
+            if (!chatInput) {
+                log('❌ Chat input field not found');
+                return false;
+            }
+            
+            // Type the message
+            chatInput.value = message;
+            chatInput.dispatchEvent(new Event('input', { bubbles: true }));
+            
+            // Find and click send button
+            const sendButton = document.querySelector('button[aria-label*="send" i], button[title*="send" i], [class*="send"]');
+            if (!sendButton) {
+                log('❌ Send button not found');
+                return false;
+            }
+            
+            sendButton.click();
+            log('✅ Message sent successfully');
+            return true;
+            
+        } catch (error) {
+            log(`❌ Error sending chat message: ${error.message}`);
+            return false;
         }
     }
     
@@ -742,6 +895,10 @@
         openChatPanel,
         closeChatPanel,
         isInZoomMeeting,
+        checkAndSendAutomatedWarnings,
+        sendWarningToParticipant,
+        selectChatRecipient,
+        sendChatMessage,
         version: '3.0.0'
     };
     
