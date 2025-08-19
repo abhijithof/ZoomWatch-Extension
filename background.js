@@ -13,16 +13,10 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 // Handle extension icon click
-chrome.action.onClicked.addListener((tab) => {
+chrome.action.onClicked.addListener(async (tab) => {
   if (tab.url && tab.url.includes('zoom.us')) {
-    // Open popup or toggle monitoring
-    chrome.tabs.sendMessage(tab.id, {
-      type: 'ZOOMWATCH_CONTROL',
-      action: 'toggle'
-    }).catch(() => {
-              // Content script not ready, attempting to inject...
-      injectContentScript(tab.id);
-    });
+    // Open side panel
+    await chrome.sidePanel.open({ tabId: tab.id });
   } else {
     // Show instructions for non-Zoom pages
     chrome.tabs.create({
