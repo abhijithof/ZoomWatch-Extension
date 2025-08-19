@@ -103,9 +103,38 @@
                 </div>
                 <div class="warning-stat">
                     <span class="warning-icon">👤</span>
-                    <span id="monitorProfile">Extension User</span>
+                    <span id="monitorProfile">Detecting...</span>
                     <span class="warning-label">Monitor Profile</span>
                 </div>
+            </div>
+            <button id="testMessageBtn" class="btn btn-test">
+                <span class="btn-icon">💬</span>
+                <span>Test Message</span>
+            </button>
+        </div>
+
+        <!-- Panel Control Testing -->
+        <div class="debug-section">
+            <div class="section-header">
+                <h3>🎛️ Panel Controls (Testing)</h3>
+            </div>
+            <div class="debug-controls">
+                <button id="openParticipantsBtn" class="btn btn-debug">
+                    <span class="btn-icon">👥</span>
+                    <span>Open Participants</span>
+                </button>
+                <button id="closeParticipantsBtn" class="btn btn-debug">
+                    <span class="btn-icon">📴</span>
+                    <span>Close Participants</span>
+                </button>
+                <button id="openChatBtn" class="btn btn-debug">
+                    <span class="btn-icon">💬</span>
+                    <span>Open Chat</span>
+                </button>
+                <button id="closeChatBtn" class="btn btn-debug">
+                    <span class="btn-icon">🔕</span>
+                    <span>Close Chat</span>
+                </button>
             </div>
         </div>
 
@@ -133,10 +162,82 @@
             </div>
         </div>
 
+        <!-- Reverse Engineering Tools -->
+        <div class="debug-section">
+            <div class="section-header">
+                <h3>🔧 Zoom Interface Analysis</h3>
+            </div>
+            <div class="debug-controls">
+                <button id="exploreBtn" class="btn btn-debug">
+                    <span class="btn-icon">🔍</span>
+                    <span>Explore Interface</span>
+                </button>
+                <button id="findElementsBtn" class="btn btn-debug">
+                    <span class="btn-icon">📱</span>
+                    <span>Find Elements</span>
+                </button>
+                <button id="analyzePanelsBtn" class="btn btn-debug">
+                    <span class="btn-icon">📋</span>
+                    <span>Analyze Panels</span>
+                </button>
+                <button id="interceptEventsBtn" class="btn btn-debug">
+                    <span class="btn-icon">📡</span>
+                    <span>Intercept Events</span>
+                </button>
+                <button id="findAPIsBtn" class="btn btn-debug">
+                    <span class="btn-icon">🌐</span>
+                    <span>Find APIs</span>
+                </button>
+                <button id="debugPanelButtonsBtn" class="btn btn-debug">
+                    <span class="btn-icon">🔍</span>
+                    <span>Debug Panels</span>
+                </button>
+                <button id="debugChatButtonsBtn" class="btn btn-debug">
+                    <span class="btn-icon">💬</span>
+                    <span>Debug Chat</span>
+                </button>
+                <button id="checkMeetingContextBtn" class="btn btn-debug">
+                    <span class="btn-icon">🔍</span>
+                    <span>Check Context</span>
+                </button>
+                <button id="debugParticipantSelectorBtn" class="btn btn-debug">
+                    <span class="btn-icon">👤</span>
+                    <span>Debug Selector</span>
+                </button>
+                <button id="openPanelsBtn" class="btn btn-debug">
+                    <span class="btn-icon">🔓</span>
+                    <span>Open Panels</span>
+                </button>
+                <button id="forceOpenPanelsBtn" class="btn btn-debug">
+                    <span class="btn-icon">⚡</span>
+                    <span>Force Open</span>
+                </button>
+                <button id="debugMeetingDetectionBtn" class="btn btn-debug">
+                    <span class="btn-icon">🔍</span>
+                    <span>Debug Meeting</span>
+                </button>
+                <button id="debugRecipientSelectionBtn" class="btn btn-debug">
+                    <span class="btn-icon">👤</span>
+                    <span>Debug Recipient</span>
+                </button>
+                <button id="forceSelectRecipientBtn" class="btn btn-debug">
+                    <span class="btn-icon">🎯</span>
+                    <span>Force Select</span>
+                </button>
+                <button id="debugMessageDeduplicationBtn" class="btn btn-debug">
+                    <span class="btn-icon">📨</span>
+                    <span>Debug Messages</span>
+                </button>
+            </div>
+        </div>
+
         <!-- Quick Actions -->
         <div class="quick-actions">
             <button id="refreshBtn" class="action-btn" title="Refresh Data">
                 <span>🔄</span>
+            </button>
+            <button id="debugBtn" class="action-btn" title="Debug Console">
+                <span>🔍</span>
             </button>
             <button id="settingsBtn" class="action-btn" title="Settings">
                 <span>⚙️</span>
@@ -146,7 +247,7 @@
         <!-- Footer -->
         <div class="footer">
             <div class="version-info">
-                <span>v3.0.0</span>
+                <span>v1.0.0</span>
                 <span class="separator">•</span>
                 <span id="updateTime">Just now</span>
             </div>
