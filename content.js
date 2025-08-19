@@ -54,9 +54,233 @@
         return url.includes('/wc/') && (url.includes('/join') || url.includes('/start'));
     }
     
-    // Find the Participants tab and get participant list
+    // Enhanced function to check if we're in a Zoom meeting (including iframe context)
+    function isInZoomMeeting() {
+        const url = window.location.href;
+        const base = url.includes('/wc/') && (url.includes('/join') || url.includes('/start'));
+        const iframe = window !== window.top;
+        
+        log(`🔍 URL check: ${url}`);
+        log(`🔍 Is in meeting: ${base} (base: ${base}, iframe: ${iframe})`);
+        
+        // Check for meeting elements
+        const hasMeetingElements = document.querySelector('.meeting-client, .meeting-client-inner, [class*="meeting"]') !== null;
+        const hasVideo = document.querySelector('video') !== null;
+        
+        log(`🔍 Has meeting elements: ${hasMeetingElements}, Has video: ${hasVideo}`);
+        
+        return base || (iframe && (hasMeetingElements || hasVideo));
+    }
+    
+    // Open panels for monitoring (enhanced with iframe detection)
+    async function openPanelsForMonitoring() {
+        log('🔓 Opening panels for monitoring...');
+        
+        // ENHANCED: Check if we're in main frame and need to look in iframes
+        if (window === window.top) {
+            log('🔍 Main frame detected, checking iframes for meeting interface...');
+            const iframes = document.querySelectorAll('iframe');
+            
+            for (let i = 0; i < iframes.length; i++) {
+                try {
+                    const iframeDoc = iframes[i].contentDocument || iframes[i].contentWindow.document;
+                    const iframeUrl = iframeDoc.URL || '';
+                    
+                    // Check if this iframe contains the meeting
+                    if (iframeUrl.includes('/wc/') && iframeUrl.includes('/start')) {
+                        log(`✅ Found meeting iframe ${i + 1}: ${iframeUrl}`);
+                        
+                        // Try to open panels in this iframe
+                        const iframeZoomWatch = iframes[i].contentWindow.ZoomWatch;
+                        if (iframeZoomWatch && iframeZoomWatch.openPanelsForMonitoring) {
+                            log(`🎯 Calling openPanelsForMonitoring in iframe ${i + 1}`);
+                            const result = await iframeZoomWatch.openPanelsForMonitoring();
+                            if (result) {
+                                log(`✅ Successfully opened panels in iframe ${i + 1}`);
+                                return true;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    log(`⚠️ Could not access iframe ${i + 1}: ${e.message}`);
+                }
+            }
+            
+            log('⚠️ No meeting iframes found or panels could not be opened in iframes');
+        }
+        
+        // Fallback: Try to open panels in current context
+        log('🔍 Attempting to open panels in current context...');
+        
+        let panelsOpened = 0;
+        
+        // Open participants panel
+        log('🔓 Attempting to open participants panel...');
+        const participantsOpened = openParticipantsPanel();
+        if (participantsOpened) {
+            log('✅ Participants panel opened for monitoring');
+            panelsOpened++;
+        }
+        
+        // Open chat panel
+        log('💬 Attempting to open chat panel...');
+        const chatOpened = openChatPanel();
+        if (chatOpened) {
+            log('✅ Chat panel opened for monitoring');
+            panelsOpened++;
+        }
+        
+        log(`✅ Successfully opened ${panelsOpened} panels for monitoring`);
+        return panelsOpened > 0;
+    }
+    
+    // Open participants panel
+    function openParticipantsPanel() {
+        log('🔓 Attempting to open participants panel...');
+        
+        if (!isInZoomMeeting()) {
+            log('❌ Not in Zoom meeting');
+            return false;
+        }
+        
+        // Look for participants button
+        const participantsButton = document.querySelector('button[aria-label*="participants" i]:not([aria-label*="close" i])');
+        if (participantsButton) {
+            log(`✅ Found participants button: button[aria-label*="participants" i]:not([aria-label*="close" i])`);
+            log(`   Aria-label: "${participantsButton.getAttribute('aria-label')}" | Class: "${participantsButton.className}"`);
+            
+            participantsButton.click();
+            log('✅ Participants panel opened');
+            return true;
+        }
+        
+        log('❌ Participants button not found');
+        return false;
+    }
+    
+    // Close participants panel
+    function closeParticipantsPanel() {
+        log('📴 Attempting to close participants panel...');
+        
+        if (!isInZoomMeeting()) {
+            log('❌ Not in Zoom meeting');
+            return false;
+        }
+        
+        // Look for close participants button
+        const closeButton = document.querySelector('button[aria-label*="close" i][aria-label*="participants" i]');
+        if (closeButton) {
+            log(`✅ Found close participants button: button[aria-label*="close" i][aria-label*="participants" i]`);
+            log(`   Aria-label: "${closeButton.getAttribute('aria-label')}" | Class: "${closeButton.className}"`);
+            
+            closeButton.click();
+            log('✅ Participants panel closed');
+            return true;
+        }
+        
+        log('❌ Close participants button not found');
+        return false;
+    }
+    
+    // Open chat panel
+    function openChatPanel() {
+        log('💬 Attempting to open chat panel...');
+        
+        if (!isInZoomMeeting()) {
+            log('❌ Not in Zoom meeting');
+            return false;
+        }
+        
+        // Look for chat button
+        const chatButton = document.querySelector('button[aria-label*="chat" i][class*="footer"]:not([aria-label*="team" i]):not([aria-label*="close" i])');
+        if (chatButton) {
+            log(`✅ Found chat button: button[aria-label*="chat" i][class*="footer"]:not([aria-label*="team" i]):not([aria-label*="close" i])`);
+            log(`   Aria-label: "${chatButton.getAttribute('aria-label')}" | Class: "${chatButton.className}"`);
+            
+            chatButton.click();
+            log('✅ Chat panel opened');
+            return true;
+        }
+        
+        log('❌ Meeting chat button not found');
+        return false;
+    }
+    
+    // Close chat panel
+    function closeChatPanel() {
+        log('🔕 Attempting to close chat panel...');
+        
+        if (!isInZoomMeeting()) {
+            log('❌ Not in Zoom meeting');
+            return false;
+        }
+        
+        // Look for close chat button
+        const closeButton = document.querySelector('button[aria-label*="close" i][aria-label*="chat" i]');
+        if (closeButton) {
+            log(`✅ Found close chat button: button[aria-label*="close" i][aria-label*="chat" i]`);
+            log(`   Aria-label: "${closeButton.getAttribute('aria-label')}" | Class: "${closeButton.className}"`);
+            
+            closeButton.click();
+            log('✅ Chat panel closed');
+            return true;
+        }
+        
+        log('❌ Close chat button not found');
+        return false;
+    }
+    
+    // Find the Participants tab and get participant list (enhanced with iframe detection)
     function findParticipantsList() {
         log('🔍 Looking for Participants tab...');
+        
+        // ENHANCED: First check iframes for participants (since panels are now opening in iframes)
+        if (window === window.top) {
+            log('🔍 Main frame detected, checking iframes for participants...');
+            const iframes = document.querySelectorAll('iframe');
+            
+            for (let i = 0; i < iframes.length; i++) {
+                try {
+                    const iframeDoc = iframes[i].contentDocument || iframes[i].contentWindow.document;
+                    const iframeUrl = iframeDoc.URL || '';
+                    
+                    // Check if this iframe contains the meeting
+                    if (iframeUrl.includes('/wc/') && iframeUrl.includes('/start')) {
+                        log(`🔍 Checking meeting iframe ${i + 1} for participants: ${iframeUrl}`);
+                        
+                        // Look for participants in this iframe
+                        const iframeParticipants = iframeDoc.querySelector('.participants-section-container');
+                        if (iframeParticipants) {
+                            log(`✅ Found participants in meeting iframe ${i + 1}: .participants-section-container`);
+                            return iframeParticipants;
+                        }
+                        
+                        // Try alternative selectors in the iframe
+                        const alternativeSelectors = [
+                            '.participants-list-container.participants-ul',
+                            '.participants-li',
+                            '[class*="participant" i]',
+                            '[data-testid*="participant"]'
+                        ];
+                        
+                        for (const selector of alternativeSelectors) {
+                            const altParticipants = iframeDoc.querySelector(selector);
+                            if (altParticipants) {
+                                log(`✅ Found participants in meeting iframe ${i + 1} with selector: ${selector}`);
+                                return altParticipants;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    log(`⚠️ Could not access iframe ${i + 1}: ${e.message}`);
+                }
+            }
+            
+            log('⚠️ No participants found in meeting iframes, falling back to main frame search...');
+        }
+        
+        // Fallback: Search in current context (main frame or iframe)
+        log('🔍 Searching current context for participants...');
         
         // Debug: Log all elements that might be participants-related
         const allParticipantElements = document.querySelectorAll('*[class*="participant" i]');
@@ -102,22 +326,11 @@
         // Method 4: Look for any element with "participant" in the class (case insensitive)
         const anyParticipantElement = document.querySelector('[class*="participant" i]');
         if (anyParticipantElement) {
-            log(`✅ Found generic participant element: ${anyParticipantElement.className}`);
+            log(`✅ Found participants in current context with selector: ${anyParticipantElement.className}`);
             return anyParticipantElement.closest('[class*="section"], [class*="container"], [class*="wrapper"]') || anyParticipantElement;
         }
         
-        // Method 5: Look for elements containing your name
-        const nameElements = Array.from(document.querySelectorAll('*')).filter(el => 
-            el.textContent && (el.textContent.includes('ABHIJITH') || el.textContent.includes('ᴀʙʜɪᴊɪᴛʜ')) && el.offsetWidth > 0
-        );
-        if (nameElements.length > 0) {
-            log(`✅ Found ${nameElements.length} elements with your name`);
-            const nameElement = nameElements[0];
-            log(`   Using: ${nameElement.tagName}.${nameElement.className}`);
-            return nameElement.closest('[class*="section"], [class*="container"], [class*="wrapper"]') || nameElement.parentElement;
-        }
-        
-        log('❌ No participants list found');
+        log('❌ No participants list found in current context or iframes');
         return null;
     }
     
@@ -376,7 +589,7 @@
         }
     }
     
-    // Start monitoring
+    // Start monitoring (enhanced with iframe detection)
     function startMonitoring() {
         if (isMonitoring) {
             log('⚠️ Already monitoring');
@@ -415,15 +628,29 @@
         isMonitoring = true;
         isPaused = false;
         
-        // Start the monitoring loop
-        monitorParticipants();
-        const interval = setInterval(() => {
-            if (isMonitoring && !isPaused) {
-                monitorParticipants();
-            } else {
-                clearInterval(interval);
-            }
-        }, config.checkInterval);
+        // First, open panels for monitoring
+        openPanelsForMonitoring().then(() => {
+            // Start the monitoring loop
+            monitorParticipants();
+            const interval = setInterval(() => {
+                if (isMonitoring && !isPaused) {
+                    monitorParticipants();
+                } else {
+                    clearInterval(interval);
+                }
+            }, config.checkInterval);
+        }).catch(error => {
+            log(`❌ Error opening panels: ${error.message}`);
+            // Still try to monitor even if panels fail
+            monitorParticipants();
+            const interval = setInterval(() => {
+                if (isMonitoring && !isPaused) {
+                    monitorParticipants();
+                } else {
+                    clearInterval(interval);
+                }
+            }, config.checkInterval);
+        });
     }
     
     // Stop monitoring
@@ -444,8 +671,10 @@
         log('▶️ RESUMING PARTICIPANT MONITORING...');
         isPaused = false;
     }
+    
+    // Duplicate function removed
         
-        // Handle messages from popup
+    // Handle messages from popup
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         log(`📨 Received message: ${message.action}`);
         
@@ -507,7 +736,13 @@
         monitorParticipants,
         findParticipantsList,
         parseParticipants,
-        version: '2.0.0'
+        openPanelsForMonitoring,
+        openParticipantsPanel,
+        closeParticipantsPanel,
+        openChatPanel,
+        closeChatPanel,
+        isInZoomMeeting,
+        version: '3.0.0'
     };
     
     log('✅ ZoomWatch content script loaded and ready!');
