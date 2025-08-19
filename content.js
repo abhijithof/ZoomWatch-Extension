@@ -676,68 +676,7 @@
     // SIMPLIFIED: Extension user IS the monitor - no profile detection needed
     // Removed detectMonitorProfile function as it's unnecessary
     
-    // DEBUG: Add click tracking to understand what elements need to be clicked
-    function addClickTracking() {
-        log('🔍 Adding click tracking for debugging...');
-        
-        // Track clicks on all elements
-        document.addEventListener('click', function(e) {
-            const target = e.target;
-            const text = target.textContent?.trim() || '';
-            const tagName = target.tagName;
-            const className = target.className;
-            const id = target.id;
-            
-            // Only log clicks on elements that might be relevant
-            if (text.includes('Everyone') || text.includes('Abhi') || 
-                className.includes('chat') || className.includes('recipient') || 
-                className.includes('participant') || className.includes('everyone')) {
-                log(`🖱️ CLICK TRACKED: ${tagName}.${className} (id: ${id}) - Text: "${text}"`);
-                
-                // Log the element's properties
-                log(`   Properties: role="${target.getAttribute('role')}", tabindex="${target.getAttribute('tabindex')}", onclick="${target.onclick ? 'yes' : 'no'}"`);
-                
-                // Log parent elements for context
-                let parent = target.parentElement;
-                let level = 1;
-                while (parent && level <= 3) {
-                    log(`   Parent ${level}: ${parent.tagName}.${parent.className}`);
-                    parent = parent.parentElement;
-                    level++;
-                }
-            }
-        }, true);
-        
-        // Also track clicks in iframes
-        const iframes = document.querySelectorAll('iframe');
-        iframes.forEach((iframe, index) => {
-            try {
-                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                iframeDoc.addEventListener('click', function(e) {
-                    const target = e.target;
-                    const text = target.textContent?.trim() || '';
-                    const tagName = target.tagName;
-                    const className = target.className;
-                    
-                    if (text.includes('Everyone') || text.includes('Abhi') || 
-                        className.includes('chat') || className.includes('recipient') || 
-                        className.includes('participant') || className.includes('everyone')) {
-                        log(`🖱️ IFRAME ${index + 1} CLICK TRACKED: ${tagName}.${className} - Text: "${text}"`);
-                    }
-                }, true);
-            } catch (e) {
-                log(`⚠️ Could not add click tracking to iframe ${index + 1}: ${e.message}`);
-            }
-        });
-        
-        log('✅ Click tracking added. Now manually click on the "Everyone" button and then on "Abhi 2" in the dropdown to see what elements are actually clickable.');
-    }
-    
-    // Manual trigger for click tracking (for testing)
-    function startClickTracking() {
-        log('🔍 Starting click tracking manually...');
-        addClickTracking();
-    }
+
     
     // Find the Participants tab and get participant list
     function findParticipantsList() {
@@ -1596,55 +1535,10 @@
     }
     
     // Debug meeting detection
-    function debugMeetingDetection() {
-        log('🔍 === DEBUGGING MEETING DETECTION ===');
-        
-        const url = window.location.href;
-        log(`🔍 Current URL: ${url}`);
-        
-        // Test isInZoomMeeting
-        const inMeeting = isInZoomMeeting();
-        log(`🔍 isInZoomMeeting(): ${inMeeting}`);
-        
-        // Test hasParticipantsNow
-        const hasParticipants = hasParticipantsNow();
-        log(`🔍 hasParticipantsNow(): ${hasParticipants}`);
-        
-        // Test if we're in an iframe
-        log(`🔍 isIframe: ${isIframe}`);
-        
-        // Show all elements that might indicate a meeting
-        const meetingElements = document.querySelectorAll('[class*="meeting"], [class*="participant"], [class*="chat"], [class*="footer"], video');
-        log(`🔍 Found ${meetingElements.length} meeting-related elements:`);
-        meetingElements.forEach((el, i) => {
-            if (i < 10) { // Limit to first 10
-                const className = el.className || '';
-                const tagName = el.tagName;
-                const visible = el.offsetWidth > 0 && el.offsetHeight > 0;
-                log(`  ${i + 1}: ${tagName}.${className.substring(0, 50)} | visible: ${visible}`);
-            }
-        });
-        
-        // Test monitoring logic
-        log(`🔍 Monitoring should continue: ${inMeeting || hasParticipants}`);
-        
-        log('=== END MEETING DETECTION DEBUG ===');
-    }
+
     
-    // Debug recipient selection
-    function debugRecipientSelection() {
-        log('👤 === DEBUGGING RECIPIENT SELECTION ===');
-        
-        // Find the "Everyone" dropdown button
-        const everyoneButton = document.querySelector('button[aria-label*="Everyone"], .chat-receiver-list__receiver, [class*="chat-receiver"]');
-        if (everyoneButton) {
-            log(`✅ Found Everyone button: ${everyoneButton.outerHTML.substring(0, 200)}`);
-            log(`   Aria-label: "${everyoneButton.getAttribute('aria-label')}"`);
-            log(`   Text content: "${everyoneButton.textContent}"`);
-            log(`   Class: "${everyoneButton.className}"`);
-        } else {
-            log('❌ Everyone button not found');
-        }
+
+
         
         // Show all potential recipient options
         const recipientOptions = document.querySelectorAll('[role="option"], [class*="chat-receiver"], [class*="participant"], [class*="dropdown"]');
@@ -2624,91 +2518,7 @@
         return true; // Keep message channel open
     });
     
-    // Make functions available globally for debugging
-    
-    // Simple global function for testing
-    window.startClickTracking = function() {
-        console.log('🔍 Starting click tracking manually...');
-        addClickTracking();
-    };
-    
-    // Test function to verify extension is loaded
-    window.testZoomWatch = function() {
-        console.log('🧪 ZoomWatch extension test - Extension is loaded and working!');
-        console.log('📊 Current config:', config);
-        console.log('🔍 Is in meeting:', isInZoomMeeting());
-        return 'ZoomWatch extension is working!';
-    };
-    
-    // Debug function to see what's available
-    window.debugZoomWatch = function() {
-        console.log('🔍 Debugging ZoomWatch...');
-        console.log('Window functions:', Object.keys(window).filter(key => key.includes('Zoom') || key.includes('start') || key.includes('test')));
-        console.log('ZoomWatch object:', window.ZoomWatch);
-        console.log('startClickTracking function:', typeof window.startClickTracking);
-        console.log('testZoomWatch function:', typeof window.testZoomWatch);
-        console.log('addClickTracking function:', typeof addClickTracking);
-        console.log('isInZoomMeeting function:', typeof isInZoomMeeting);
-    };
-    
-    // Try multiple ways to expose functions
-    try {
-        // Method 1: Direct window assignment
-        window.startClickTracking2 = addClickTracking;
-        window.testZoomWatch2 = function() {
-            return testZoomWatch();
-        };
-        
-        // Method 2: Using Object.defineProperty
-        Object.defineProperty(window, 'startClickTracking3', {
-            value: addClickTracking,
-            writable: true,
-            configurable: true
-        });
-        
-        // Method 3: eval removed due to CSP restrictions
-        console.log('⚠️ eval method skipped due to CSP restrictions');
-        
-        console.log('🔍 Multiple exposure methods attempted');
-        console.log('startClickTracking2:', typeof window.startClickTracking2);
-        console.log('startClickTracking3:', typeof window.startClickTracking3);
-        console.log('startClickTracking4:', typeof window.startClickTracking4);
-    } catch (e) {
-        console.log('❌ Error with multiple exposure methods:', e.message);
-    }
-    
-    // Immediate test to see if functions are created
-    console.log('🔍 Creating global functions...');
-    console.log('startClickTracking created:', typeof window.startClickTracking);
-    console.log('testZoomWatch created:', typeof window.testZoomWatch);
-    console.log('debugZoomWatch created:', typeof window.debugZoomWatch);
-    
-    // Test if we can call the functions directly
-    try {
-        console.log('🔍 Testing direct function calls...');
-        if (typeof addClickTracking === 'function') {
-            console.log('✅ addClickTracking function exists');
-        } else {
-            console.log('❌ addClickTracking function does not exist');
-        }
-        
-        if (typeof isInZoomMeeting === 'function') {
-            console.log('✅ isInZoomMeeting function exists');
-        } else {
-            console.log('❌ isInZoomMeeting function does not exist');
-        }
-        
-        // Test if debugExtensionContext exists
-        if (typeof debugExtensionContext === 'function') {
-            console.log('✅ debugExtensionContext function exists');
-            // Call it to see the context
-            debugExtensionContext();
-        } else {
-            console.log('❌ debugExtensionContext function does not exist');
-        }
-    } catch (e) {
-        console.log('❌ Error testing functions:', e.message);
-    }
+
     
     window.ZoomWatch = {
         startMonitoring,
