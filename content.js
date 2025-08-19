@@ -1710,6 +1710,566 @@
     }
     
     // Debug participant selector in chat
+    async function debugParticipantSelector() {
+        log(`INFO: === DEBUGGING PARTICIPANT SELECTOR ===`);
+        
+        // Check current iframe context
+        const isIframe = window !== window.top;
+        log(`LOCATION: Current context: ${isIframe ? 'IFRAME' : 'MAIN'} - URL: ${window.location.href}`);
+        
+        // First, check if chat panel is already open, or try to open it
+        const chatPanelOpen = isChatPanelOpen();
+        if (!chatPanelOpen) {
+            log('CHAT: Chat panel not open, attempting to open...');
+            if (!openChatPanel()) {
+                log('ERROR: Cannot debug: Chat panel not open');
+                return false;
+            }
+        } else {
+            log('SUCCESS: Chat panel already open, proceeding with debug...');
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Find the "Everyone" dropdown button with comprehensive Zoom selectors
+        log('INFO: Looking for recipient selector button...');
+        
+        const everyoneButtonSelectors = [
+            // Original selectors
+            'button[aria-label*="Everyone"]',
+            '.chat-receiver-list__receiver',
+            '[class*="chat-receiver"]',
+            // More specific Zoom selectors
+            '[class*="receiver"]',
+            '[class*="recipient"]',
+            '[class*="everyone"]',
+            '[class*="chat-to"]',
+            '[class*="to-text"]',
+            // Look for elements containing "to:" text
+            '[class*="chat"]:contains("to:")',
+            // Look for dropdown/select elements BUT filter out non-chat ones
+            '[role="button"][aria-haspopup="true"]:not([class*="avatar"]):not([class*="profile"]):not([class*="header-avatar"])',
+            '[class*="dropdown"]:not([class*="avatar"]):not([class*="profile"])',
+            '[class*="select"]:not([class*="avatar"]):not([class*="profile"])',
+            // Look for elements with "Everyone" text
+            'button:contains("Everyone")',
+            '[class*="button"]:contains("Everyone")',
+            // Look for elements near "to:" text BUT ensure they're clickable
+            '[class*="chat"] button:has([class*="to"])',
+            '[class*="chat"] [role="button"]:has([class*="to"])',
+            '[class*="chat"] [tabindex]:has([class*="to"])',
+            // More generic selectors BUT filter out non-chat
+            '[class*="chat"] button:not([class*="avatar"]):not([class*="profile"])',
+            '[class*="message"] button:not([class*="avatar"]):not([class*="profile"])',
+            '[class*="panel"] button:not([class*="avatar"]):not([class*="profile"])'
+        ];
+        
+        let everyoneButton = null;
+        let foundSelector = '';
+        
+        for (const selector of everyoneButtonSelectors) {
+            try {
+                const button = document.querySelector(selector);
+                if (button && button.offsetWidth > 0) {
+                    // Validate this is actually a chat-related button
+                    const className = button.className || '';
+                    const ariaLabel = button.getAttribute('aria-label') || '';
+                    const title = button.getAttribute('title') || '';
+                    const text = button.textContent || '';
+                    
+                    // Skip avatar/profile buttons
+                    if (className.includes('avatar') || className.includes('profile') || 
+                        ariaLabel.includes('avatar') || ariaLabel.includes('profile') ||
+                        title.includes('avatar') || title.includes('profile')) {
+                        log(`SKIP: Skipping avatar/profile button: ${selector}`);
+                        continue;
+                    }
+                    
+                    // Prefer buttons with chat-related text or classes
+                    if (className.includes('chat') || className.includes('receiver') || 
+                        className.includes('recipient') || text.includes('to:') || 
+                        text.includes('Everyone') || ariaLabel.includes('chat')) {
+                        
+                        // Additional validation: ensure it's actually clickable
+                        const isClickable = button.tagName === 'BUTTON' || 
+                                          button.getAttribute('role') === 'button' ||
+                                          button.onclick ||
+                                          button.getAttribute('tabindex') !== null;
+                        
+                        if (isClickable) {
+                            log(`SUCCESS: Found clickable chat-related button with selector: ${selector}`);
+                            everyoneButton = button;
+                            foundSelector = selector;
+                            break;
+                        } else {
+                            log(`SKIP: Found chat-related element but not clickable: ${selector}`);
+                            // Continue searching for a clickable one
+                            continue;
+                        }
+                    } else {
+                        log(`SKIP: Found button but not clearly chat-related: ${selector}`);
+                        // Keep as fallback but continue searching
+                        if (!everyoneButton) {
+                            everyoneButton = button;
+                            foundSelector = selector;
+                        }
+                    }
+                }
+            } catch (e) {
+                // Skip invalid selectors
+                continue;
+            }
+        }
+        
+        // If no button found, try searching by text content in main frame and iframes
+        if (!everyoneButton) {
+            log('INFO: No button found with selectors, searching by text content...');
+            
+            // Search in main frame first
+            const mainFrameElements = document.querySelectorAll('*');
+            let foundInMain = false;
+            
+            for (const element of mainFrameElements) {
+                const text = element.textContent?.trim() || '';
+                const ariaLabel = element.getAttribute('aria-label') || '';
+                const className = element.className || '';
+                
+                if ((text.includes('to:') || text.includes('Everyone')) && 
+                    (className.includes('chat') || className.includes('receiver') || className.includes('recipient'))) {
+                    log(`SUCCESS: Found potential recipient element in main frame: "${text}"`);
+                    log(`   Element: ${element.outerHTML.substring(0, 200)}...`);
+                    
+                    // Check if it's clickable
+                    if (element.tagName === 'BUTTON' || element.onclick || element.getAttribute('role') === 'button') {
+                        everyoneButton = element;
+                        foundSelector = 'main-frame-text-search';
+                        foundInMain = true;
+                        break;
+                    }
+                }
+            }
+            
+            // If not found in main frame, search in iframes
+            if (!foundInMain) {
+                log('INFO: Not found in main frame, searching iframes for recipient button...');
+                const allIframes = document.querySelectorAll('iframe');
+                
+                for (let i = 0; i < allIframes.length; i++) {
+                    const iframe = allIframes[i];
+                    try {
+                        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                        const iframeElements = iframeDoc.querySelectorAll('*');
+                        
+                        for (const element of iframeElements) {
+                            const text = element.textContent?.trim() || '';
+                            const ariaLabel = element.getAttribute('aria-label') || '';
+                            const className = element.className || '';
+                            
+                            // Look for elements containing "to:" OR "Everyone" (relaxed criteria)
+                            if (text.includes('to:') || text.includes('Everyone')) {
+                                log(`SUCCESS: Found potential recipient element in iframe ${i + 1}: "${text}"`);
+                                log(`   Element: ${element.outerHTML.substring(0, 200)}...`);
+                                
+                                // Check if it's clickable - more lenient validation
+                                const isClickable = element.tagName === 'BUTTON' || 
+                                                   element.onclick || 
+                                                   element.getAttribute('role') === 'button' || 
+                                                   element.getAttribute('tabindex') !== null ||
+                                                   element.getAttribute('aria-haspopup') === 'true' ||
+                                                   element.classList.contains('dropdown') ||
+                                                   element.classList.contains('dropup');
+                                
+                                if (isClickable) {
+                                    log(`SUCCESS: Recipient button is clickable in iframe ${i + 1}`);
+                                    log(`   Clickability: tag=${element.tagName}, role=${element.getAttribute('role')}, tabindex=${element.getAttribute('tabindex')}, aria-haspopup=${element.getAttribute('aria-haspopup')}`);
+                                    everyoneButton = element;
+                                    foundSelector = `iframe-${i + 1}-text-search`;
+                                    break;
+                                } else {
+                                    log(`SKIP: Element found but not clickable: tag=${element.tagName}, role=${element.getAttribute('role')}, tabindex=${element.getAttribute('tabindex')}`);
+                                }
+                            }
+                        }
+                        
+                        if (everyoneButton) break;
+                        
+                    } catch (error) {
+                        log(`   Iframe ${i + 1}: Cannot access (${error.message})`);
+                    }
+                }
+            }
+        }
+        
+        if (!everyoneButton) {
+            log('ERROR: Everyone button not found with any selector');
+            log('INFO: Debug: Showing all elements with "to:" or "Everyone" text...');
+            
+            const allElements = document.querySelectorAll('*');
+            let relevantElements = [];
+            
+            for (const element of allElements) {
+                const text = element.textContent?.trim() || '';
+                if (text.includes('to:') || text.includes('Everyone')) {
+                    relevantElements.push({
+                        tag: element.tagName,
+                        class: element.className,
+                        text: text.substring(0, 100),
+                        ariaLabel: element.getAttribute('aria-label') || '',
+                        visible: element.offsetWidth > 0
+                    });
+                }
+            }
+            
+            if (relevantElements.length > 0) {
+                log(`INFO: Found ${relevantElements.length} elements with relevant text:`);
+                relevantElements.slice(0, 10).forEach((elem, i) => {
+                    log(`   ${i + 1}: ${elem.tag}.${elem.class} | "${elem.text}" | aria: "${elem.ariaLabel}" | visible: ${elem.visible}`);
+                });
+            }
+            
+            return false;
+        }
+        
+        log(`SUCCESS: Found Everyone button with selector: ${foundSelector}`);
+        log(`   Button element: ${everyoneButton.outerHTML.substring(0, 200)}...`);
+        
+        log(`SUCCESS: Found Everyone button: ${everyoneButton.ariaLabel || 'no aria-label'}`);
+        log(`   Button element: ${everyoneButton.outerHTML.substring(0, 200)}...`);
+        
+        // Click the Everyone button
+        everyoneButton.click();
+        log('SUCCESS: Clicked Everyone dropdown');
+        
+        // Wait longer for dropdown to fully populate
+        log('⏳ Waiting for dropdown to populate...');
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        // ENHANCED SEARCH: Look for dropdown options in current context
+        const dropdownOptions = document.querySelectorAll('[role="option"], [role="menuitem"], .dropdown-item, [class*="dropdown"], [class*="dropup"], [class*="menu-item"], [class*="list-item"]');
+        log(`INFO: Found ${dropdownOptions.length} dropdown options in current context`);
+        
+        for (let i = 0; i < dropdownOptions.length; i++) {
+            const option = dropdownOptions[i];
+            const text = option.textContent || '';
+            const ariaLabel = option.getAttribute('aria-label') || '';
+            log(`   Option ${i + 1}: "${text}" (aria-label: "${ariaLabel}")`);
+        }
+        
+        // Also search specifically for participant-related elements
+        log('INFO: Searching for participant-specific elements in current context...');
+        const participantElements = document.querySelectorAll('[class*="participant"], [class*="user"], [class*="member"], [class*="attendee"], [class*="receiver"]');
+        log(`INFO: Found ${participantElements.length} participant-related elements in current context`);
+        
+        for (let i = 0; i < participantElements.length; i++) {
+            const element = participantElements[i];
+            const text = element.textContent || '';
+            const className = element.className || '';
+            log(`   Participant Element ${i + 1}: "${text}" (class: "${className}")`);
+        }
+        
+        // Search for actual participant names that should be in the dropdown
+        log('INFO: Searching for actual participant names in dropdown...');
+        const allTextElements = document.querySelectorAll('*');
+        let participantNames = [];
+        
+        for (const element of allTextElements) {
+            const text = element.textContent?.trim() || '';
+            // Look for names that match our known participants
+            if (text.includes('ᴀʙʜɪᴊɪᴛʜ') || text.includes('Abhi') || text.includes('Everyone')) {
+                if (text.length < 100 && !text.includes('{') && !text.includes('}')) { // Filter out long text and JSON
+                    participantNames.push({
+                        text: text,
+                        tag: element.tagName,
+                        class: element.className || '',
+                        ariaLabel: element.getAttribute('aria-label') || ''
+                    });
+                }
+            }
+        }
+        
+        if (participantNames.length > 0) {
+            log(`INFO: Found ${participantNames.length} potential participant names:`);
+            participantNames.forEach((name, i) => {
+                log(`   Name ${i + 1}: "${name.text}" (${name.tag}.${name.class} | aria: "${name.ariaLabel}")`);
+            });
+        }
+        
+        // Check if dropdown opened in a different iframe
+        log('INFO: Checking all iframes for dropdown options...');
+        const allIframes = document.querySelectorAll('iframe');
+        log(`Found ${allIframes.length} iframes`);
+        
+        for (let i = 0; i < allIframes.length; i++) {
+            const iframe = allIframes[i];
+            try {
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                const iframeOptions = iframeDoc.querySelectorAll('[role="option"], [role="menuitem"], .dropdown-item, [class*="dropdown"], [class*="dropup"]');
+                if (iframeOptions.length > 0) {
+                    log(`   Iframe ${i + 1}: Found ${iframeOptions.length} dropdown options`);
+                    for (let j = 0; j < iframeOptions.length; j++) {
+                        const option = iframeOptions[j];
+                        const text = option.textContent || '';
+                        const ariaLabel = option.getAttribute('aria-label') || '';
+                        log(`     Option ${j + 1}: "${text}" (aria-label: "${ariaLabel}")`);
+                    }
+                }
+                
+                // ENHANCED: Search for actual participant names in this iframe
+                log(`   INFO: Searching iframe ${i + 1} for participant names...`);
+                
+                // Search in multiple ways for the actual recipient dropdown items
+                const searchSelectors = [
+                    '[class*="menu-item"]', '[class*="dropdown-item"]', '[class*="option"]', '[class*="item"]',
+                    '[class*="receiver"]', '[class*="chat-receiver"]', '[class*="recipient"]',
+                    '[role="option"]', '[role="menuitem"]', '[role="menuitemradio"]',
+                    '[class*="chat"] [class*="item"]', '[class*="chat"] [class*="option"]'
+                ];
+                
+                let foundParticipants = [];
+                let allElements = new Set();
+                
+                // Collect all elements from different selectors
+                for (const selector of searchSelectors) {
+                    const elements = iframeDoc.querySelectorAll(selector);
+                    elements.forEach(el => allElements.add(el));
+                }
+                
+                // Also search for elements containing specific text patterns
+                const allTextElements = iframeDoc.querySelectorAll('*');
+                for (const element of allTextElements) {
+                    const text = element.textContent?.trim() || '';
+                    if (text.includes('Everyone in Meeting') || text.includes('Abhi 2') || 
+                        text.includes('ᴀʙʜɪᴊɪᴛʜ') || text.includes('Meeting')) {
+                        allElements.add(element);
+                    }
+                }
+                
+                // CRITICAL: Search for the actual recipient dropdown that should appear after clicking
+                // Look for dropdown elements that might contain participant names
+                const recipientDropdownSelectors = [
+                    '[class*="dropdown-menu"]', '[class*="menu"]', '[class*="popup"]',
+                    '[class*="chat-receiver"]', '[class*="receiver-list"]',
+                    '[class*="chat-receiver-list"]', '[class*="chat-receiver-list__scrollbar"]',
+                    '[class*="chat-receiver-list__menu"]', '[class*="chat-receiver-list__menu-item"]'
+                ];
+                
+                log(`   INFO: Looking for recipient dropdown containers...`);
+                for (const selector of recipientDropdownSelectors) {
+                    const elements = iframeDoc.querySelectorAll(selector);
+                    elements.forEach(el => {
+                        // Check if this looks like a dropdown that's open/visible
+                        const style = window.getComputedStyle(el);
+                        const isVisible = style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+                        const hasDropdownClass = el.className.includes('dropdown') || el.className.includes('menu');
+                        
+                        if (isVisible && hasDropdownClass) {
+                            log(`   TARGET: Found potential dropdown container: ${el.tagName}.${el.className}`);
+                            allElements.add(el);
+                            
+                            // Look inside this dropdown for participant names
+                            const dropdownItems = el.querySelectorAll('[class*="menu-item"], [class*="dropdown-item"], [role="menuitem"], [role="menuitemradio"]');
+                            if (dropdownItems.length > 0) {
+                                log(`   INFO: Found ${dropdownItems.length} items in dropdown container`);
+                                dropdownItems.forEach((item, idx) => {
+                                    const text = item.textContent?.trim() || '';
+                                    const className = item.className || '';
+                                    if (text.length < 100) {
+                                        log(`     Dropdown Item ${idx + 1}: "${text}" (${className})`);
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+                
+                // Process all collected elements
+                for (const element of allElements) {
+                    const text = element.textContent?.trim() || '';
+                    const className = element.className || '';
+                    const ariaLabel = element.getAttribute('aria-label') || '';
+                    const tagName = element.tagName || '';
+                    
+                    // Look for actual participant names (not generic menu items)
+                    if (text.includes('Everyone') || text.includes('Abhi') || text.includes('ᴀʙʜɪᴊɪᴛʜ') || 
+                        text.includes('Meeting') || text.includes('participant') || text.includes('user')) {
+                        if (text.length < 100 && !text.includes('{') && !text.includes('}')) {
+                            foundParticipants.push({
+                                text: text,
+                                class: className,
+                                ariaLabel: ariaLabel,
+                                tagName: tagName,
+                                element: element
+                            });
+                        }
+                    }
+                }
+                
+                // CRITICAL: After processing, look specifically for the recipient dropdown items
+                // that should contain "Everyone in Meeting" and "Abhi 2"
+                log(`   INFO: Looking for recipient dropdown items specifically...`);
+                
+                // ENHANCED: Look for the exact dropdown structure from your screenshot
+                log(`   TARGET: ENHANCED SEARCH: Looking for chat-receiver-list__menu-item elements...`);
+                const chatReceiverItems = iframeDoc.querySelectorAll('[class*="chat-receiver-list__menu-item"]');
+                if (chatReceiverItems.length > 0) {
+                    log(`   SUCCESS: Found ${chatReceiverItems.length} chat receiver menu items:`);
+                    chatReceiverItems.forEach((item, idx) => {
+                        const text = item.textContent?.trim() || '';
+                        const className = item.className || '';
+                        const role = item.getAttribute('role') || '';
+                        log(`     Chat Receiver ${idx + 1}: "${text}" (${className} | role: ${role})`);
+                    });
+                } else {
+                    log(`   ERROR: No chat-receiver-list__menu-item elements found`);
+                }
+                
+                // TARGETED SEARCH: Look for "Everyone in Meeting" specifically
+                log(`   TARGET: TARGETED SEARCH: Looking for "Everyone in Meeting" text...`);
+                const allTargetElements = iframeDoc.querySelectorAll('*');
+                let foundTargetText = [];
+                
+                for (const element of allTargetElements) {
+                    const text = element.textContent?.trim() || '';
+                    
+                    // Look for the exact text patterns from your screenshot
+                    if (text === 'Everyone in Meeting' || text === 'Abhi 2' || 
+                        text.includes('Everyone in Meeting') || text.includes('Abhi 2')) {
+                        
+                        const className = element.className || '';
+                        const tagName = element.tagName || '';
+                        const role = element.getAttribute('role') || '';
+                        const id = element.id || '';
+                        
+                        foundTargetText.push({
+                            text: text,
+                            class: className,
+                            tagName: tagName,
+                            role: role,
+                            id: id,
+                            element: element
+                        });
+                        
+                        log(`   TARGET: FOUND TARGET TEXT: "${text}" (${tagName}.${className} | role: ${role} | id: ${id})`);
+                    }
+                }
+                
+                if (foundTargetText.length > 0) {
+                    log(`   SUCCESS: Found ${foundTargetText.length} elements with target text in iframe ${i + 1}:`);
+                    foundTargetText.forEach((item, idx) => {
+                        log(`     Target ${idx + 1}: "${item.text}" (${item.tagName}.${item.class} | role: ${item.role} | id: ${item.id})`);
+                        
+                        // Check if this looks like a clickable dropdown item
+                        const isClickable = item.element.tagName === 'A' || 
+                                           item.element.tagName === 'BUTTON' ||
+                                           item.element.onclick ||
+                                           item.element.getAttribute('role') === 'option' ||
+                                           item.element.getAttribute('role') === 'menuitem' ||
+                                           item.element.getAttribute('tabindex') !== null;
+                        
+                        if (isClickable) {
+                            log(`       TARGET: CLICKABLE: This element can be clicked!`);
+                        }
+                    });
+                } else {
+                    log(`   ERROR: No target text found in iframe ${i + 1}`);
+                }
+                
+                // Also search for recipient dropdown items with broader selectors
+                const recipientItems = iframeDoc.querySelectorAll('[class*="menu-item"], [class*="dropdown-item"], [role="menuitem"], [role="menuitemradio"]');
+                let foundRecipientItems = [];
+                
+                for (const item of recipientItems) {
+                    const text = item.textContent?.trim() || '';
+                    const className = item.className || '';
+                    const role = item.getAttribute('role') || '';
+                    
+                    // Look for the specific recipient options we saw in your screenshot
+                    if (text.includes('Everyone in Meeting') || text.includes('Abhi 2') || 
+                        (text.includes('Everyone') && text.includes('Meeting')) ||
+                        (text.includes('Abhi') && !text.includes('A2'))) {
+                        
+                        foundRecipientItems.push({
+                            text: text,
+                            class: className,
+                            role: role,
+                            element: item
+                        });
+                        
+                        log(`   TARGET: FOUND RECIPIENT ITEM: "${text}" (${className} | role: ${role})`);
+                    }
+                }
+                
+                if (foundRecipientItems.length > 0) {
+                    log(`   SUCCESS: Found ${foundRecipientItems.length} recipient dropdown items in iframe ${i + 1}:`);
+                    foundRecipientItems.forEach((item, idx) => {
+                        log(`     Recipient Item ${idx + 1}: "${item.text}" (${item.class} | role: ${item.role})`);
+                    });
+                } else {
+                    log(`   ERROR: No recipient dropdown items found in iframe ${i + 1}`);
+                }
+                
+                if (foundParticipants.length > 0) {
+                    log(`   SUCCESS: Found ${foundParticipants.length} potential participant names in iframe ${i + 1}:`);
+                    foundParticipants.forEach((participant, idx) => {
+                        log(`     Participant ${idx + 1}: "${participant.text}" (${participant.tagName}.${participant.class} | aria: "${participant.ariaLabel}")`);
+                        
+                        // Check if this looks like a clickable dropdown item
+                        const isClickable = participant.element.tagName === 'A' || 
+                                           participant.element.tagName === 'BUTTON' ||
+                                           participant.element.onclick ||
+                                           participant.element.getAttribute('role') === 'option' ||
+                                           participant.element.getAttribute('role') === 'menuitem' ||
+                                           participant.element.getAttribute('tabindex') !== null;
+                        
+                        if (isClickable) {
+                            log(`       TARGET: CLICKABLE: This element can be clicked!`);
+                        }
+                    });
+                }
+            } catch (error) {
+                log(`   Iframe ${i + 1}: Cannot access (${error.message})`);
+            }
+        }
+        
+        // Also check parent window if we're in an iframe
+        if (isIframe && window.parent !== window) {
+            try {
+                const parentOptions = window.parent.document.querySelectorAll('[role="option"], [role="menuitem"], .dropdown-item, [class*="dropdown"], [class*="dropup"]');
+                log(`Parent window: Found ${parentOptions.length} dropdown options`);
+                for (let i = 0; i < parentOptions.length; i++) {
+                    const option = parentOptions[i];
+                    const text = option.textContent || '';
+                    const ariaLabel = option.getAttribute('aria-label') || '';
+                    log(`   Parent Option ${i + 1}: "${text}" (aria-label: "${ariaLabel}")`);
+                }
+            } catch (error) {
+                log(`Parent window: Cannot access (${error.message})`);
+            }
+        }
+        
+        log('INFO: === END PARTICIPANT SELECTOR DEBUG ===');
+        return true;
+    }
+    
+    // Debug host detection
+    function debugHostDetection() {
+        log('INFO: === DEBUGGING HOST DETECTION ===');
+        log(`SUCCESS: Extension user is the monitor`);
+        
+        const allParticipantElements = document.querySelectorAll('[class*="participant"], [class*="attendee"]');
+        log(`Found ${allParticipantElements.length} participant elements:`);
+        
+        for (const element of allParticipantElements) {
+            const ariaLabel = element.getAttribute('aria-label') || '';
+            const text = element.textContent || '';
+            log(`  Element: "${text.substring(0, 50)}..." | aria-label: "${ariaLabel}"`);
+            
+            if (ariaLabel.includes('Host, me')) {
+                log(`  SUCCESS: FOUND HOST: "${ariaLabel}"`);
+            }
+        }
+        
+        log('INFO: === END HOST DETECTION DEBUG ===');
     }
     
     // Stop monitoring
@@ -1967,19 +2527,13 @@
         closeParticipantsPanel,
         openChatPanel,
         closeChatPanel,
-        // Debug and utility functions
+        // Core utility functions
         findChatInput,
         findChatSendButton,
         selectChatRecipient,
         openPanelsForMonitoring,
         forceOpenPanelsForMonitoring,
-        debugMeetingDetection,
-        debugRecipientSelection,
         forceSelectRecipient,
-        debugMessageDeduplication,
-        debugParticipantSelector,
-        debugPanelButtons,
-        debugChatButtons,
         isInZoomMeeting,
         getTrackingData: () => Array.from(participantTracking.entries()),
         getConfig: () => config,
@@ -2259,6 +2813,58 @@
         return { zoomObjects, apiHints };
     }
     
+    // Debug function to show all available panel buttons
+    function debugPanelButtons() {
+        log('INFO: === PANEL BUTTONS DEBUG ===');
+        
+        // Find ALL buttons in the current document
+        const allButtons = document.querySelectorAll('button, [role="button"]');
+        log(`BUTTONS: Total buttons found: ${allButtons.length}`);
+        
+        // Show all buttons with participants in aria-label
+        const participantButtons = Array.from(allButtons).filter(btn => {
+            const ariaLabel = btn.getAttribute('aria-label') || '';
+            return ariaLabel.toLowerCase().includes('participant');
+        });
+        
+        log(`PARTICIPANTS: Participants-related buttons (${participantButtons.length}):`);
+        participantButtons.forEach((btn, i) => {
+            const text = btn.textContent?.trim().substring(0, 30) || '';
+            const ariaLabel = btn.getAttribute('aria-label') || '';
+            const visible = btn.offsetWidth > 0 && btn.offsetHeight > 0;
+            log(`  ${i + 1}: "${text}" | aria: "${ariaLabel}" | visible: ${visible}`);
+        });
+        
+        // Show all buttons with chat in aria-label
+        const chatButtons = Array.from(allButtons).filter(btn => {
+            const ariaLabel = btn.getAttribute('aria-label') || '';
+            return ariaLabel.toLowerCase().includes('chat');
+        });
+        
+        log(`CHAT: Chat-related buttons (${chatButtons.length}):`);
+        chatButtons.forEach((btn, i) => {
+            const text = btn.textContent?.trim().substring(0, 30) || '';
+            const ariaLabel = btn.getAttribute('aria-label') || '';
+            const visible = btn.offsetWidth > 0 && btn.offsetHeight > 0;
+            log(`  ${i + 1}: "${text}" | aria: "${ariaLabel}" | visible: ${visible}`);
+        });
+        
+        // Show all footer buttons (likely where panel controls are)
+        const footerButtons = document.querySelectorAll('.footer-button, [class*="footer"], [class*="control"]');
+        log(`FOOTER: Footer/Control buttons (${footerButtons.length}):`);
+        footerButtons.forEach((btn, i) => {
+            if (i < 10) { // Limit to first 10
+                const text = btn.textContent?.trim().substring(0, 30) || '';
+                const ariaLabel = btn.getAttribute('aria-label') || '';
+                const className = btn.className || '';
+                const visible = btn.offsetWidth > 0 && btn.offsetHeight > 0;
+                log(`  ${i + 1}: "${text}" | aria: "${ariaLabel}" | class: "${className.substring(0, 50)}" | visible: ${visible}`);
+            }
+        });
+        
+        log('=== END PANEL BUTTONS DEBUG ===');
+    }
+    
     // Check if we're in a Zoom meeting context
     function isInZoomMeeting() {
         const url = window.location.href;
@@ -2287,8 +2893,96 @@
         
         return finalResult;
     }
+    
+    // Debug function to check extension context
+    function debugExtensionContext() {
+        console.log('INFO: === EXTENSION CONTEXT DEBUG ===');
+        console.log('Current URL:', window.location.href);
+        console.log('Is in iframe:', window !== window.top);
+        console.log('Is in Zoom meeting:', isInZoomMeeting());
+        console.log('Frame type:', window === window.top ? 'MAIN FRAME' : 'IFRAME');
+        console.log('Extension loaded at:', new Date().toISOString());
+        console.log('=== END EXTENSION CONTEXT DEBUG ===');
     }
     
+    // Debug function to show all chat-related buttons
+    function debugChatButtons() {
+        log('INFO: === CHAT BUTTONS DEBUG ===');
+        
+        // Find ALL buttons in the current document
+        const allButtons = document.querySelectorAll('button, [role="button"]');
+        log(`BUTTONS: Total buttons found: ${allButtons.length}`);
+        
+        // Show all buttons with "chat" in aria-label
+        const chatButtons = Array.from(allButtons).filter(btn => {
+            const ariaLabel = btn.getAttribute('aria-label') || '';
+            const title = btn.getAttribute('title') || '';
+            return ariaLabel.toLowerCase().includes('chat') || title.toLowerCase().includes('chat');
+        });
+        
+        log(`CHAT: Chat-related buttons (${chatButtons.length}):`);
+        chatButtons.forEach((btn, i) => {
+            const text = btn.textContent?.trim().substring(0, 30) || '';
+            const ariaLabel = btn.getAttribute('aria-label') || '';
+            const title = btn.getAttribute('title') || '';
+            const visible = btn.offsetWidth > 0 && btn.offsetHeight > 0;
+            const isTeamChat = ariaLabel.toLowerCase().includes('team chat') || title.toLowerCase().includes('team chat');
+            log(`  ${i + 1}: "${text}" | aria: "${ariaLabel}" | title: "${title}" | visible: ${visible} | team: ${isTeamChat}`);
+        });
+        
+        // Show all footer buttons (likely where meeting chat controls are)
+        const footerButtons = document.querySelectorAll('.footer-button, [class*="footer"], [class*="control"]');
+        log(`FOOTER: Footer/Control buttons (${footerButtons.length}):`);
+        footerButtons.forEach((btn, i) => {
+            if (i < 15) { // Limit to first 15
+                const text = btn.textContent?.trim().substring(0, 30) || '';
+                const ariaLabel = btn.getAttribute('aria-label') || '';
+                const className = btn.className || '';
+                const visible = btn.offsetWidth > 0 && btn.offsetHeight > 0;
+                log(`  ${i + 1}: "${text}" | aria: "${ariaLabel}" | class: "${className.substring(0, 50)}" | visible: ${visible}`);
+            }
+        });
+        
+        log('=== END CHAT BUTTONS DEBUG ===');
+    }
+    
+    // Test recipient selection functionality
+    async function testRecipientSelection() {
+        log('TEST: === TESTING RECIPIENT SELECTION ===');
+        
+        // First, make sure chat panel is open
+        const chatOpened = openChatPanel();
+        if (!chatOpened) {
+            log('ERROR: Cannot test recipient selection: Chat panel not open');
+            return;
+        }
+        
+        // Wait for chat panel to load
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Test selecting a specific recipient
+        const testRecipient = 'ᴀʙʜɪᴊɪᴛʜ'; // Use the participant name from your meeting
+        log(`TEST: Testing selection of recipient: ${testRecipient}`);
+        
+        const success = await selectChatRecipient(testRecipient);
+        if (success) {
+            log('SUCCESS: Recipient selection test successful!');
+        } else {
+            log('ERROR: Recipient selection test failed');
+        }
+        
+        log('=== END RECIPIENT SELECTION TEST ===');
+    }
+    
+    // Force select recipient by clicking directly on participant list
+    async function forceSelectRecipient(recipientName) {
+        log(`TARGET: Force selecting recipient: ${recipientName}`);
+        
+        try {
+            // First, ensure chat panel is open
+            if (!openChatPanel()) {
+                log('ERROR: Cannot force select recipient: Chat panel not open');
+                return false;
             }
             
             // Wait for chat panel to load
@@ -2661,7 +3355,9 @@
     // Immediate inline test
     console.log('INFO: INLINE TEST - Extension just loaded');
     console.log('Functions available:', {
-
+        startClickTracking: typeof window.startClickTracking,
+        testZoomWatch: typeof window.testZoomWatch,
+        debugZoomWatch: typeof window.debugZoomWatch,
         ZoomWatch: typeof window.ZoomWatch
     });
     
