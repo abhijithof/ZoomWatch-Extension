@@ -1,6 +1,6 @@
 // ZoomWatch Background Service Worker
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('ZoomWatch extension installed');
+  // ZoomWatch extension installed
   
   // Set default settings
   chrome.storage.sync.set({
@@ -20,7 +20,7 @@ chrome.action.onClicked.addListener((tab) => {
       type: 'ZOOMWATCH_CONTROL',
       action: 'toggle'
     }).catch(() => {
-      console.log('Content script not ready, attempting to inject...');
+              // Content script not ready, attempting to inject...
       injectContentScript(tab.id);
     });
   } else {
@@ -38,14 +38,14 @@ async function injectContentScript(tabId) {
       target: { tabId: tabId },
       files: ['content.js']
     });
-    console.log('Content script manually injected into tab:', tabId);
+            // Content script manually injected into tab
     
     // Wait a bit for script to initialize
     setTimeout(() => {
       chrome.tabs.sendMessage(tabId, {
         type: 'ZOOMWATCH_PING'
       }).catch(() => {
-        console.log('Content script still not responding after injection');
+        // Content script still not responding after injection
       });
     }, 1000);
     
@@ -58,7 +58,7 @@ async function injectContentScript(tabId) {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'ZOOM_PARTICIPANT_UPDATE') {
     // Log participant updates
-    console.log('Participant update:', message.data);
+            // Participant update received
     
     // Store in local storage for popup to access
     chrome.storage.local.set({
@@ -80,7 +80,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   
   // Handle warning messages
   if (message.type === 'ZOOM_WARNING_SENT') {
-    console.log('Warning sent:', message.data);
+            // Warning sent
     
     // Store warning data
     chrome.storage.local.set({
@@ -102,7 +102,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   
   // Handle reminder messages (legacy)
   if (message.type === 'ZOOM_REMINDER') {
-    console.log('Reminder sent:', message.data);
+            // Reminder sent
     
     chrome.notifications.create({
       type: 'basic',
@@ -113,7 +113,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   
   // Handle private room requests (placeholder functionality)
   if (message.type === 'ZOOM_PRIVATE_ROOM_REQUEST') {
-    console.log('Private room request:', message.data);
+            // Private room request
     
     // Store request data
     chrome.storage.local.set({
@@ -135,13 +135,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   
   // Handle ping messages
   if (message.type === 'ZOOMWATCH_PING') {
-    console.log('Received ping from content script');
+            // Received ping from content script
     sendResponse({ received: true, timestamp: Date.now() });
   }
   
   // Handle test messages
   if (message.type === 'TEST') {
-    console.log('Received test message from content script');
+            // Received test message from content script
     sendResponse({ received: true, test: 'success' });
   }
   
@@ -154,11 +154,11 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       tab.url && 
       tab.url.includes('zoom.us')) {
     
-    console.log('Zoom tab detected, checking content script...');
+            // Zoom tab detected, checking content script
     
     // Send a message to check if content script is already running
     chrome.tabs.sendMessage(tabId, { type: 'ZOOMWATCH_PING' }).catch(() => {
-      console.log('Content script not responding, attempting manual injection...');
+              // Content script not responding, attempting manual injection
       injectContentScript(tabId);
     });
   }
@@ -166,19 +166,19 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
 // Keep service worker alive
 chrome.runtime.onStartup.addListener(() => {
-  console.log('ZoomWatch extension started');
+          // ZoomWatch extension started
 });
 
 // Handle extension startup
 chrome.runtime.onStartup.addListener(() => {
-  console.log('ZoomWatch extension startup');
+          // ZoomWatch extension startup
 });
 
 // Handle extension message errors
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Always send a response to prevent "Could not establish connection" errors
   if (chrome.runtime.lastError) {
-    console.log('Message error:', chrome.runtime.lastError);
+            // Message error occurred
     sendResponse({ error: chrome.runtime.lastError.message });
   } else {
     sendResponse({ received: true });

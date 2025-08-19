@@ -29,7 +29,7 @@ class ZoomWatchPopup {
     }
     
     init() {
-        log('🚀 Initializing ZoomWatch popup...');
+        // Initializing ZoomWatch popup
         
         // Set up event listeners
         this.setupEventListeners();
@@ -148,7 +148,7 @@ class ZoomWatchPopup {
                 this.updateStatusText('Please navigate to a Zoom meeting', 'warning');
             }
         } catch (error) {
-            log(`❌ Connection check failed: ${error.message}`);
+            // Connection check failed
             this.updateConnectionStatus('disconnected', 'Connection Failed');
         }
     }
@@ -192,7 +192,7 @@ class ZoomWatchPopup {
     
     // Monitoring controls
     async startMonitoring() {
-        log('🟢 Starting monitoring...');
+        // Starting monitoring
         
         // Add loading state
         this.setButtonLoading('startBtn', true);
@@ -210,14 +210,14 @@ class ZoomWatchPopup {
                 this.updateStatusText('Monitoring active...', 'success');
                 this.updateButtonStates();
                 this.showSuccessAnimation();
-                log('✅ Monitoring started successfully');
+                // Monitoring started successfully
             } else {
-                log('❌ Failed to start monitoring');
+                // Failed to start monitoring
                 this.updateStatusText('Failed to start monitoring', 'error');
                 this.showErrorAnimation();
             }
         } catch (error) {
-            log(`❌ Error starting monitoring: ${error.message}`);
+            // Error starting monitoring
             this.updateStatusText('Error starting monitoring', 'error');
             this.showErrorAnimation();
         } finally {
@@ -226,7 +226,7 @@ class ZoomWatchPopup {
     }
     
     async stopMonitoring() {
-        log('🔴 Stopping monitoring...');
+        // Stopping monitoring
         
         this.setButtonLoading('stopBtn', true);
         
@@ -242,10 +242,10 @@ class ZoomWatchPopup {
                 this.state.isMonitoring = false;
                 this.updateStatusText('Monitoring stopped', 'warning');
                 this.updateButtonStates();
-                log('✅ Monitoring stopped successfully');
+                // Monitoring stopped successfully
             }
         } catch (error) {
-            log(`❌ Error stopping monitoring: ${error.message}`);
+            // Error stopping monitoring
             this.updateStatusText('Error stopping monitoring', 'error');
         } finally {
             this.setButtonLoading('stopBtn', false);
@@ -253,7 +253,7 @@ class ZoomWatchPopup {
     }
     
     async pauseMonitoring() {
-        log('⏸️ Pausing monitoring...');
+        // Pausing monitoring
         
         this.setButtonLoading('pauseBtn', true);
         
@@ -269,10 +269,10 @@ class ZoomWatchPopup {
                 this.state.isPaused = true;
                 this.updateStatusText('Monitoring paused', 'warning');
                 this.updateButtonStates();
-                log('✅ Monitoring paused successfully');
+                // Monitoring paused successfully
             }
         } catch (error) {
-            log(`❌ Error pausing monitoring: ${error.message}`);
+            // Error pausing monitoring
             this.updateStatusText('Error pausing monitoring', 'error');
         } finally {
             this.setButtonLoading('pauseBtn', false);
@@ -388,7 +388,7 @@ class ZoomWatchPopup {
                 this.updateTimestamp();
                 this.animateStatsUpdate();
                 
-                log(`✅ Updated stats: ${this.state.stats.total} participants, ${this.state.stats.camerasOff} cameras off, ${this.state.stats.warningsSent} warnings sent`);
+                // Stats updated successfully
             } else {
                 // Fallback: try to get data from localStorage
                 await this.loadDataFromStorage();
