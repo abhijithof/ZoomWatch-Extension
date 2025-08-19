@@ -7,21 +7,20 @@
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #ffffff;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: #1e293b;
     line-height: 1.6;
-    margin: 0;
-    padding: 0;
     overflow: hidden;
 }
 
 /* Main Container */
-.side-panel-container {
-    width: 100%;
-    height: 100vh;
+.popup-container {
+    width: 380px;
+    min-height: 580px;
     background: #ffffff;
-    overflow-y: auto;
-    overflow-x: hidden;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
     position: relative;
     animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -43,10 +42,8 @@ body {
     background-size: 300% 300%;
     animation: gradientShift 6s ease infinite;
     color: white;
-    padding: 20px 16px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    padding: 24px 20px 20px;
+    position: relative;
     overflow: hidden;
 }
 
@@ -147,7 +144,7 @@ body {
 
 /* Stats Container */
 .stats-container {
-    padding: 20px 16px 16px;
+    padding: 24px 20px 16px;
     background: #f8fafc;
 }
 
@@ -155,7 +152,6 @@ body {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 12px;
-    max-width: 100%;
 }
 
 .stat-card {
@@ -229,7 +225,7 @@ body {
 
 /* Status Panel */
 .status-panel {
-    padding: 16px;
+    padding: 16px 20px;
     background: white;
     border-bottom: 1px solid #e2e8f0;
 }
@@ -273,7 +269,7 @@ body {
 
 /* Controls Section */
 .controls-section {
-    padding: 16px;
+    padding: 20px;
     display: flex;
     gap: 12px;
 }
@@ -341,18 +337,19 @@ body {
 
 /* Participants Section */
 .participants-section {
-    margin: 0 16px 20px 16px;
+    margin: 0 20px;
     background: white;
     border-radius: 12px;
     border: 1px solid #e2e8f0;
     overflow: hidden;
+    margin-bottom: 20px;
 }
 
 .section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px;
+    padding: 16px 20px;
     background: #f8fafc;
     border-bottom: 1px solid #e2e8f0;
 }
@@ -423,7 +420,7 @@ body {
     display: flex;
     justify-content: center;
     gap: 16px;
-    padding: 16px;
+    padding: 16px 20px;
     background: #f8fafc;
 }
 
@@ -455,7 +452,7 @@ body {
 
 /* Footer */
 .footer {
-    padding: 16px;
+    padding: 16px 20px;
     background: #f8fafc;
     border-top: 1px solid #e2e8f0;
 }
@@ -507,8 +504,8 @@ body {
 
 /* Responsive Design */
 @media (max-width: 400px) {
-    .side-panel-container {
-        width: 100%;
+    .popup-container {
+        width: 340px;
     }
     
     .stats-grid {
@@ -527,7 +524,7 @@ body {
 
 /* Warning System Styles */
 .warning-controls {
-    padding: 16px;
+    padding: 16px 20px;
     background: #f8fafc;
     border-top: 1px solid #e2e8f0;
     border-bottom: 1px solid #e2e8f0;
@@ -638,10 +635,9 @@ input[type="checkbox"]:checked + .toggle-label .toggle-switch::before {
 }
 
 .warnings-section {
-    padding: 16px;
+    padding: 16px 20px;
     background: #fef3c7;
     border-top: 1px solid #fbbf24;
-    margin: 0 16px;
 }
 
 .warnings-section .section-header {

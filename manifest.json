@@ -8,8 +8,7 @@
     "storage",
     "tabs",
     "notifications",
-    "scripting",
-    "sidePanel"
+    "scripting"
   ],
   "host_permissions": [
     "https://*.zoom.us/*",
@@ -30,10 +29,8 @@
     "type": "module"
   },
   "action": {
-    "default_title": "ZoomWatch - Open Side Panel"
-  },
-  "side_panel": {
-    "default_path": "popup.html"
+    "default_popup": "popup.html",
+    "default_title": "ZoomWatch"
   },
   "web_accessible_resources": [{
     "resources": ["content.js", "popup.js"],

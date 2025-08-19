@@ -11,17 +11,14 @@
     const isMainFrame = window === window.top;
     const isIframe = !isMainFrame;
     
-    // Logging function with frame indicator - only log errors and critical info
-    function log(message, level = 'info') {
-        // Only log errors and critical warnings in production
-        if (level === 'error' || level === 'critical') {
-            const frameInfo = isIframe ? '[IFRAME]' : '[MAIN]';
-            console.log(`[ZoomWatch] ${frameInfo} ${message}`);
-        }
+    // Logging function with frame indicator
+    function log(message) {
+        const frameInfo = isIframe ? '[IFRAME]' : '[MAIN]';
+        console.log(`[ZoomWatch] ${frameInfo} ${message}`);
     }
     
     // Log build version on load
-    log(`🚀 ZoomWatch loaded - Build: ${ZW_BUILD}`, 'info');
+    log(`🚀 ZoomWatch loaded - Build: ${ZW_BUILD}`);
     
     // Function to check if participants exist (can be called multiple times)
     function hasParticipantsNow() {
@@ -40,6 +37,7 @@
         if (isIframe) {
             for (const selector of participantSelectors) {
                 if (document.querySelector(selector)) {
+                    log(`✅ Found participants in iframe: ${selector}`);
                     return true;
                 }
             }
@@ -56,10 +54,12 @@
             
             for (const selector of meetingIndicators) {
                 if (document.querySelector(selector)) {
+                    log(`✅ Found meeting indicator in iframe: ${selector}`);
                     return true;
                 }
             }
             
+            log('❌ No participants or meeting indicators found in iframe');
             return false;
         }
         
@@ -70,7 +70,8 @@
                 const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
                 for (const selector of participantSelectors) {
                     if (iframeDoc.querySelector(selector)) {
-                        return true;
+                        log(`✅ Found participants in iframe: ${selector}`);
+                    return true;
                     }
                 }
             } catch (e) {
@@ -78,6 +79,7 @@
             }
         }
         
+        log('❌ No participants found in any iframe');
         return false;
     }
     
@@ -98,7 +100,7 @@
             },
             level3: {
                 delay: 50000, // 50 seconds total (20 seconds after level 2)
-                message: "FINAL WARNING: Your camera has been off for 50 seconds. You will be moved to a private room with a mentor in 10 seconds."
+                message: "Final warning: You will now be moved to a private room with a mentor to discuss camera requirements. [PRIVATE_ROOM_PLACEHOLDER - Automated room assignment feature coming soon]"
             }
         },
         enableAutoWarnings: true,
@@ -146,11 +148,11 @@
     
     // Open participants panel programmatically
     function openParticipantsPanel() {
-        // Attempting to open participants panel
+        log('🔓 Attempting to open participants panel...');
         
         // Safety check: only allow in meeting context (but be more lenient in iframes)
         if (!isInZoomMeeting() && !isIframe) {
-            // Cannot open participants panel: Not in a Zoom meeting
+            log('❌ Cannot open participants panel: Not in a Zoom meeting');
             return false;
         }
         
@@ -174,7 +176,8 @@
         for (const selector of participantsSelectors) {
             const button = document.querySelector(selector);
             if (button && button.offsetWidth > 0) {
-                        // Found participants button
+                log(`✅ Found participants button: ${selector}`);
+                log(`   Aria-label: "${button.getAttribute('aria-label')}" | Class: "${button.className}"`);
                 button.click();
                 log('✅ Participants panel opened');
                 return true;
@@ -183,13 +186,18 @@
         
         // Debug: show all buttons with "participant" in aria-label
         const participantButtons = document.querySelectorAll('[aria-label*="participant" i]');
-        // Participants button not found - panel may already be open
+        log(`🔍 Found ${participantButtons.length} buttons with "participant" in aria-label:`);
+        participantButtons.forEach((btn, i) => {
+            log(`  ${i + 1}: "${btn.getAttribute('aria-label')}" | visible: ${btn.offsetWidth > 0}`);
+        });
+        
+        log('❌ Participants button not found - panel may already be open');
         return false;
     }
     
     // Close participants panel programmatically
     function closeParticipantsPanel() {
-        // Attempting to close participants panel
+        log('🔒 Attempting to close participants panel...');
         
         // Look for any button that has "close" AND "participants" in aria-label
         const possibleButtons = [
@@ -202,24 +210,32 @@
         for (const selector of possibleButtons) {
             const closeButton = document.querySelector(selector);
             if (closeButton && closeButton.offsetWidth > 0) {
-                // Found close participants button
+                log(`✅ Found close participants button: ${selector}`);
+                log(`   Aria-label: "${closeButton.getAttribute('aria-label')}"`);
                 closeButton.click();
                 log('✅ Participants panel closed');
                 return true;
             }
         }
         
-        // Close participants button not found - panel may already be closed
+        // Debug: show all buttons with "participants" in aria-label
+        const participantButtons = document.querySelectorAll('[aria-label*="participant" i]');
+        log(`🔍 Found ${participantButtons.length} buttons with "participants" in aria-label:`);
+        participantButtons.forEach((btn, i) => {
+            log(`  ${i + 1}: "${btn.getAttribute('aria-label')}" | visible: ${btn.offsetWidth > 0}`);
+        });
+        
+        log('❌ Close participants button not found - panel may already be closed');
         return false;
     }
     
     // Open chat panel programmatically  
     function openChatPanel() {
-        // Attempting to open chat panel
+        log('💬 Attempting to open chat panel...');
         
         // Safety check: only allow in meeting context (but be more lenient in iframes)
         if (!isInZoomMeeting() && !isIframe) {
-            // Cannot open chat panel: Not in a Zoom meeting
+            log('❌ Cannot open chat panel: Not in a Zoom meeting');
             return false;
         }
         
@@ -251,29 +267,30 @@
                 if (ariaLabel.toLowerCase().includes('team') || 
                     title.toLowerCase().includes('team') ||
                     className.toLowerCase().includes('team')) {
-                    // Skipping team-related button
+                    log(`⏭️ Skipping team-related button: "${ariaLabel}" | class: "${className}"`);
                     continue;
                 }
                 
                 // For iframes, be less restrictive about meeting controls
                 if (isIframe || className.includes('footer') || className.includes('control') || className.includes('bottom')) {
-                    // Found chat button
+                    log(`✅ Found chat button: ${selector}`);
+                    log(`   Aria-label: "${ariaLabel}" | Class: "${className}"`);
                     button.click();
                     log('✅ Chat panel opened');
                     return true;
                 } else {
-                    // Skipping non-meeting button
+                    log(`⏭️ Skipping non-meeting button: "${ariaLabel}" | class: "${className}"`);
                 }
             }
         }
         
-        // Meeting chat button not found - panel may already be open
+        log('❌ Meeting chat button not found - panel may already be open');
         return false;
     }
     
     // Close chat panel programmatically
     function closeChatPanel() {
-        // Attempting to close chat panel
+        log('🔒 Attempting to close chat panel...');
         
         // Look for any button that has "close" AND "chat" in aria-label
         const possibleButtons = [
@@ -286,14 +303,22 @@
         for (const selector of possibleButtons) {
             const closeButton = document.querySelector(selector);
             if (closeButton && closeButton.offsetWidth > 0) {
-                // Found close chat button
+                log(`✅ Found close chat button: ${selector}`);
+                log(`   Aria-label: "${closeButton.getAttribute('aria-label')}"`);
                 closeButton.click();
                 log('✅ Chat panel closed');
                 return true;
             }
         }
         
-        // Close chat button not found - panel may already be closed
+        // Debug: show all buttons with "chat" in aria-label
+        const chatButtons = document.querySelectorAll('[aria-label*="chat" i]');
+        log(`🔍 Found ${chatButtons.length} buttons with "chat" in aria-label:`);
+        chatButtons.forEach((btn, i) => {
+            log(`  ${i + 1}: "${btn.getAttribute('aria-label')}" | visible: ${btn.offsetWidth > 0}`);
+        });
+        
+        log('❌ Close chat button not found - panel may already be closed');
         return false;
     }
     
@@ -330,13 +355,13 @@
         for (const selector of chatSelectors) {
             const element = document.querySelector(selector);
             if (element && element.offsetWidth > 0) {
-                // Found chat input in current document
+                log(`✅ Found chat input in current document: ${selector}`);
                 return element;
             }
         }
         
         // If not found, search in iframes
-        // Chat input not found in current document, searching iframes
+        log('🔍 Chat input not found in current document, searching iframes...');
         const iframes = document.querySelectorAll('iframe');
         for (let i = 0; i < iframes.length; i++) {
             try {
@@ -344,7 +369,7 @@
                 for (const selector of chatSelectors) {
                     const element = iframeDoc.querySelector(selector);
                     if (element && element.offsetWidth > 0) {
-                        // Found chat input in iframe
+                        log(`✅ Found chat input in iframe ${i + 1}: ${selector}`);
                         return element;
                     }
                 }
@@ -353,7 +378,7 @@
             }
         }
         
-        // Chat input not found in current document or any iframe
+        log('❌ Chat input not found in current document or any iframe');
         return null;
     }
     
@@ -382,13 +407,13 @@
         for (const selector of sendSelectors) {
             const element = document.querySelector(selector);
             if (element && element.offsetWidth > 0) {
-                // Found send button in current document
+                log(`✅ Found send button in current document: ${selector}`);
                 return element;
             }
         }
         
         // If not found, search in iframes
-        // Send button not found in current document, searching iframes
+        log('🔍 Send button not found in current document, searching iframes...');
         const iframes = document.querySelectorAll('iframe');
         for (let i = 0; i < iframes.length; i++) {
             try {
@@ -396,7 +421,7 @@
                 for (const selector of sendSelectors) {
                     const element = iframeDoc.querySelector(selector);
                     if (element && element.offsetWidth > 0) {
-                        // Found send button in iframe
+                        log(`✅ Found send button in iframe ${i + 1}: ${selector}`);
                         return element;
                     }
                 }
@@ -405,20 +430,20 @@
             }
         }
         
-        // Send button not found in current document or any iframe
+        log('❌ Send button not found in current document or any iframe');
         return null;
     }
     
     // Send a message through Zoom chat
     async function sendChatMessage(message, recipientName = 'Everyone') {
         try {
-            // Attempting to send message
+            log(`📤 Attempting to send message: "${message}" to ${recipientName}`);
             
             // If sending to specific person, select them first
             if (recipientName !== 'Everyone') {
                 const recipientSelected = await selectChatRecipient(recipientName);
                 if (!recipientSelected) {
-                    // Failed to select recipient - ABORTING message send
+                    log(`❌ Failed to select recipient ${recipientName} - ABORTING message send`);
                     return false; // Don't send to Everyone as fallback - this causes spam
                 }
             }
@@ -426,7 +451,7 @@
             // Find chat input
             const chatInput = findChatInput();
             if (!chatInput) {
-                // Cannot send message: Chat input not found
+                log('❌ Cannot send message: Chat input not found');
                 return false;
             }
             
@@ -434,13 +459,14 @@
             chatInput.focus();
             
             // Clear existing content and insert message using ProseMirror-compatible method
-            // Setting message text in chat input
+            log(`🔍 Setting message text: "${message}" in chat input`);
+            log(`🔍 Chat input type: contentEditable=${chatInput.contentEditable}, tagName=${chatInput.tagName}`);
             
             if (chatInput.contentEditable === 'true') {
-                // Using setProseMirrorText for contenteditable element
+                log('🔍 Using setProseMirrorText for contenteditable element');
                 setProseMirrorText(chatInput, message);
             } else {
-                // Using direct value assignment for input element
+                log('🔍 Using direct value assignment for input element');
                 chatInput.value = message;
                 chatInput.dispatchEvent(new Event('input', { bubbles: true }));
                 chatInput.dispatchEvent(new Event('change', { bubbles: true }));
@@ -543,8 +569,8 @@
                 if (text.includes('Abhi 2') || text.includes('Everyone') || text.includes('Meeting')) {
                     log(`✅ Found dropdown with participant names: ${dd.tagName}.${className}`);
                     dropdownMenu = dd;
-                    break;
-                }
+                        break;
+                    }
             }
             
             if (!dropdownMenu) {
@@ -597,8 +623,8 @@
                     text.toLowerCase().includes(recipientName.toLowerCase())) {
                     target = element;
                     log(`✅ Found recipient: "${text}" (matched "${recipientName}")`);
-                    break;
-                }
+                            break;
+                        }
             }
             if (target) break;
         }

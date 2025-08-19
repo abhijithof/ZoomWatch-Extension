@@ -1,6 +1,6 @@
 // ZoomWatch Background Service Worker
 chrome.runtime.onInstalled.addListener(() => {
-  // ZoomWatch extension installed
+  console.log('ZoomWatch extension installed');
   
   // Set default settings
   chrome.storage.sync.set({
@@ -13,10 +13,16 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 // Handle extension icon click
-chrome.action.onClicked.addListener(async (tab) => {
+chrome.action.onClicked.addListener((tab) => {
   if (tab.url && tab.url.includes('zoom.us')) {
-    // Open side panel
-    await chrome.sidePanel.open({ tabId: tab.id });
+    // Open popup or toggle monitoring
+    chrome.tabs.sendMessage(tab.id, {
+      type: 'ZOOMWATCH_CONTROL',
+      action: 'toggle'
+    }).catch(() => {
+      console.log('Content script not ready, attempting to inject...');
+      injectContentScript(tab.id);
+    });
   } else {
     // Show instructions for non-Zoom pages
     chrome.tabs.create({
@@ -32,14 +38,14 @@ async function injectContentScript(tabId) {
       target: { tabId: tabId },
       files: ['content.js']
     });
-            // Content script manually injected into tab
+    console.log('Content script manually injected into tab:', tabId);
     
     // Wait a bit for script to initialize
     setTimeout(() => {
       chrome.tabs.sendMessage(tabId, {
         type: 'ZOOMWATCH_PING'
       }).catch(() => {
-        // Content script still not responding after injection
+        console.log('Content script still not responding after injection');
       });
     }, 1000);
     
@@ -52,7 +58,7 @@ async function injectContentScript(tabId) {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'ZOOM_PARTICIPANT_UPDATE') {
     // Log participant updates
-            // Participant update received
+    console.log('Participant update:', message.data);
     
     // Store in local storage for popup to access
     chrome.storage.local.set({
@@ -74,7 +80,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   
   // Handle warning messages
   if (message.type === 'ZOOM_WARNING_SENT') {
-            // Warning sent
+    console.log('Warning sent:', message.data);
     
     // Store warning data
     chrome.storage.local.set({
@@ -96,7 +102,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   
   // Handle reminder messages (legacy)
   if (message.type === 'ZOOM_REMINDER') {
-            // Reminder sent
+    console.log('Reminder sent:', message.data);
     
     chrome.notifications.create({
       type: 'basic',
@@ -107,7 +113,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   
   // Handle private room requests (placeholder functionality)
   if (message.type === 'ZOOM_PRIVATE_ROOM_REQUEST') {
-            // Private room request
+    console.log('Private room request:', message.data);
     
     // Store request data
     chrome.storage.local.set({
@@ -129,13 +135,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   
   // Handle ping messages
   if (message.type === 'ZOOMWATCH_PING') {
-            // Received ping from content script
+    console.log('Received ping from content script');
     sendResponse({ received: true, timestamp: Date.now() });
   }
   
   // Handle test messages
   if (message.type === 'TEST') {
-            // Received test message from content script
+    console.log('Received test message from content script');
     sendResponse({ received: true, test: 'success' });
   }
   
@@ -148,11 +154,11 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       tab.url && 
       tab.url.includes('zoom.us')) {
     
-            // Zoom tab detected, checking content script
+    console.log('Zoom tab detected, checking content script...');
     
     // Send a message to check if content script is already running
     chrome.tabs.sendMessage(tabId, { type: 'ZOOMWATCH_PING' }).catch(() => {
-              // Content script not responding, attempting manual injection
+      console.log('Content script not responding, attempting manual injection...');
       injectContentScript(tabId);
     });
   }
@@ -160,19 +166,19 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
 // Keep service worker alive
 chrome.runtime.onStartup.addListener(() => {
-          // ZoomWatch extension started
+  console.log('ZoomWatch extension started');
 });
 
 // Handle extension startup
 chrome.runtime.onStartup.addListener(() => {
-          // ZoomWatch extension startup
+  console.log('ZoomWatch extension startup');
 });
 
 // Handle extension message errors
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Always send a response to prevent "Could not establish connection" errors
   if (chrome.runtime.lastError) {
-            // Message error occurred
+    console.log('Message error:', chrome.runtime.lastError);
     sendResponse({ error: chrome.runtime.lastError.message });
   } else {
     sendResponse({ received: true });
