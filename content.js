@@ -800,19 +800,24 @@
                 '[data-testid="chat-input"]',
                 '.chat-input',
                 '[class*="chat-input"]',
-                // Placeholder-based selectors
+                // Placeholder-based selectors (PRIORITIZE TEXTAREA)
                 'textarea[placeholder*="chat" i]',
-                'input[placeholder*="chat" i]',
                 'textarea[placeholder*="message" i]',
-                'input[placeholder*="message" i]',
-                // Generic chat input fields
+                'textarea[placeholder*="type" i]',
+                // Input selectors (EXCLUDING FILE INPUTS)
+                'input[placeholder*="chat" i]:not([type="file"])',
+                'input[placeholder*="message" i]:not([type="file"])',
+                'input[placeholder*="type" i]:not([type="file"])',
+                // Generic chat input fields (PRIORITIZE TEXTAREA)
                 '.chat-panel textarea',
-                '.chat-panel input',
+                '.chat-panel input:not([type="file"])',
                 '[class*="chat"] textarea',
-                '[class*="chat"] input',
-                // Fallback: any textarea in chat area
+                '[class*="chat"] input:not([type="file"])',
+                '[class*="message"] textarea',
+                '[class*="message"] input:not([type="file"])',
+                // Fallback: any textarea in chat area (SAFEST)
                 'textarea',
-                'input[type="text"]'
+                'input[type="text"]:not([type="file"])'
             ];
             
             let chatInput = null;
@@ -830,9 +835,16 @@
                 const inputElements = document.querySelectorAll('input, textarea');
                 inputElements.forEach((el, i) => {
                     if (i < 5) { // Log first 5 to avoid spam
-                        log(`   ${i+1}: ${el.tagName}.${el.className} - placeholder: "${el.placeholder}"`);
+                        log(`   ${i+1}: ${el.tagName}.${el.className} - type: "${el.type}" - placeholder: "${el.placeholder}"`);
                     }
                 });
+                return false;
+            }
+            
+            // CRITICAL: Verify this is NOT a file input
+            if (chatInput.type === 'file') {
+                log('❌ CRITICAL: Found file input instead of text input! This would save files to PC!');
+                log('🔍 File input details:', chatInput);
                 return false;
             }
             
