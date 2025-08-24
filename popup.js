@@ -52,35 +52,12 @@ class ZoomWatchPopup {
         
         // Action buttons
         document.getElementById('refreshBtn')?.addEventListener('click', () => this.manualRefresh());
-        document.getElementById('debugBtn')?.addEventListener('click', () => this.debugCameraDetection());
         document.getElementById('settingsBtn')?.addEventListener('click', () => this.openSettings());
         
         // Warning system controls
         document.getElementById('autoWarningsToggle')?.addEventListener('change', (e) => this.toggleAutoWarnings(e.target.checked));
-        document.getElementById('testMessageBtn')?.addEventListener('click', () => this.testChatMessage());
         
-        // Debug and reverse engineering controls
-        document.getElementById('exploreBtn')?.addEventListener('click', () => this.exploreZoomInterface());
-        document.getElementById('findElementsBtn')?.addEventListener('click', () => this.findClickableElements());
-        document.getElementById('analyzePanelsBtn')?.addEventListener('click', () => this.analyzePanels());
-        document.getElementById('interceptEventsBtn')?.addEventListener('click', () => this.interceptZoomEvents());
-        document.getElementById('findAPIsBtn')?.addEventListener('click', () => this.findZoomAPIs());
-        document.getElementById('debugPanelButtonsBtn')?.addEventListener('click', () => this.debugPanelButtons());
-        document.getElementById('debugChatButtonsBtn')?.addEventListener('click', () => this.debugChatButtons());
-        document.getElementById('checkMeetingContextBtn')?.addEventListener('click', () => this.checkMeetingContext());
-        document.getElementById('debugParticipantSelectorBtn')?.addEventListener('click', () => this.debugParticipantSelector());
-        document.getElementById('openPanelsBtn')?.addEventListener('click', () => this.openPanels());
-        document.getElementById('forceOpenPanelsBtn')?.addEventListener('click', () => this.forceOpenPanels());
-        document.getElementById('debugMeetingDetectionBtn')?.addEventListener('click', () => this.debugMeetingDetection());
-        document.getElementById('debugRecipientSelectionBtn')?.addEventListener('click', () => this.debugRecipientSelection());
-        document.getElementById('forceSelectRecipientBtn')?.addEventListener('click', () => this.forceSelectRecipient());
-        document.getElementById('debugMessageDeduplicationBtn')?.addEventListener('click', () => this.debugMessageDeduplication());
-        
-        // Panel control testing buttons
-        document.getElementById('openParticipantsBtn')?.addEventListener('click', () => this.openParticipantsPanel());
-        document.getElementById('closeParticipantsBtn')?.addEventListener('click', () => this.closeParticipantsPanel());
-        document.getElementById('openChatBtn')?.addEventListener('click', () => this.openChatPanel());
-        document.getElementById('closeChatBtn')?.addEventListener('click', () => this.closeChatPanel());
+
         
         // Participants toggle
         document.getElementById('expandToggle')?.addEventListener('click', () => this.toggleParticipants());
@@ -199,10 +176,12 @@ class ZoomWatchPopup {
         
         try {
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            
+            // Send message to ALL frames, not just main frame
             const response = await chrome.tabs.sendMessage(
                 tab.id,
-                { source: 'zoomwatch', action: 'startMonitoring' },
-                { frameId: 0 }
+                { source: 'zoomwatch', action: 'startMonitoring' }
+                // Removed frameId: 0 to send to all frames
             );
             
             if (response && response.success) {
@@ -210,6 +189,12 @@ class ZoomWatchPopup {
                 this.updateStatusText('Monitoring active...', 'success');
                 this.updateButtonStates();
                 this.showSuccessAnimation();
+                
+                // Request fresh data after starting monitoring
+                setTimeout(() => {
+                    this.requestFreshData();
+                }, 1000);
+                
                 log('✅ Monitoring started successfully');
             } else {
                 log('❌ Failed to start monitoring');
@@ -234,8 +219,8 @@ class ZoomWatchPopup {
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
             const response = await chrome.tabs.sendMessage(
                 tab.id,
-                { source: 'zoomwatch', action: 'stopMonitoring' },
-                { frameId: 0 }
+                { source: 'zoomwatch', action: 'stopMonitoring' }
+                // Removed frameId: 0 to send to all frames
             );
             
             if (response && response.success) {
@@ -261,8 +246,8 @@ class ZoomWatchPopup {
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
             const response = await chrome.tabs.sendMessage(
                 tab.id,
-                { source: 'zoomwatch', action: 'pauseMonitoring' },
-                { frameId: 0 }
+                { source: 'zoomwatch', action: 'pauseMonitoring' }
+                // Removed frameId: 0 to send to all frames
             );
             
             if (response && response.success) {
@@ -351,8 +336,11 @@ class ZoomWatchPopup {
     async requestFreshData() {
         try {
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            const response = await chrome.tabs.sendMessage(tab.id, { action: 'requestData' });
             
+            // Send message to ALL frames to get data from whichever frame has it
+            const response = await chrome.tabs.sendMessage(tab.id, { source: 'zoomwatch', action: 'requestData' });
+            
+            console.log('🔍 DEBUG: requestData response:', response);
             if (response && response.success && response.data) {
                 // Calculate warnings sent from tracking data
                 let totalWarnings = 0;
@@ -389,13 +377,18 @@ class ZoomWatchPopup {
                 this.animateStatsUpdate();
                 
                 log(`✅ Updated stats: ${this.state.stats.total} participants, ${this.state.stats.camerasOff} cameras off, ${this.state.stats.warningsSent} warnings sent`);
+                return true;
             } else {
+                log('⚠️ No response from content script, trying localStorage fallback...');
                 // Fallback: try to get data from localStorage
                 await this.loadDataFromStorage();
+                return false;
             }
         } catch (error) {
             log(`❌ Error requesting data: ${error.message}`);
+            log('🔄 Falling back to localStorage...');
             await this.loadDataFromStorage();
+            return false;
         }
     }
     
@@ -627,7 +620,7 @@ class ZoomWatchPopup {
     async toggleAutoWarnings(enabled) {
         try {
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            const response = await chrome.tabs.sendMessage(tab.id, { action: 'toggleAutoWarnings' });
+            const response = await chrome.tabs.sendMessage(tab.id, { source: 'zoomwatch', action: 'toggleAutoWarnings' });
             
             if (response && response.success) {
                 this.state.warningSystem.enabled = response.enabled;
@@ -641,37 +634,7 @@ class ZoomWatchPopup {
         }
     }
     
-    async testChatMessage() {
-        try {
-            this.updateStatusText('Sending test message...', 'info');
-            
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            const response = await chrome.tabs.sendMessage(tab.id, { 
-                action: 'testChatMessage',
-                data: {
-                    message: 'Test message from ZoomWatch - Chat integration working!',
-                    recipient: 'Everyone'
-                }
-            });
-            
-            if (response && response.success) {
-                this.updateStatusText('Test message sent successfully!', 'success');
-                log('✅ Test message sent successfully');
-            } else {
-                this.updateStatusText('Test message failed', 'error');
-                log('❌ Test message failed');
-            }
-            
-            // Reset status after 3 seconds
-            setTimeout(() => {
-                this.updateStatusMessage();
-            }, 3000);
-            
-        } catch (error) {
-            log(`❌ Error sending test message: ${error.message}`);
-            this.updateStatusText('Test message error', 'error');
-        }
-    }
+
     
     updateWarningStats() {
         const warningsSentElement = document.getElementById('warningsSentCount');
@@ -694,425 +657,7 @@ class ZoomWatchPopup {
         }
     }
     
-    async debugCameraDetection() {
-        log('🔍 Debugging camera detection...');
-        
-        this.updateStatusText('Running debug...', 'info');
-        
-        try {
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            
-            // Execute debug script
-            await chrome.scripting.executeScript({
-                target: { tabId: tab.id },
-                func: () => {
-                    console.log('\n🔍 === ZOOMWATCH DEBUG INFO ===');
-                    console.log('Timestamp:', new Date().toISOString());
-                    console.log('URL:', window.location.href);
-                    console.log('ZoomWatch loaded:', !!window.ZoomWatch);
-                    
-                    if (window.ZoomWatch) {
-                        console.log('Available functions:', Object.keys(window.ZoomWatch));
-                        
-                        if (typeof window.ZoomWatch.findParticipantsList === 'function') {
-                            const list = window.ZoomWatch.findParticipantsList();
-                            console.log('Participants list element:', list);
-                            
-                            if (list) {
-                                const participants = window.ZoomWatch.parseParticipants(list);
-                                console.log('Parsed participants:', participants);
-                                console.log('Total participants:', participants.length);
-                                
-                                participants.forEach((p, i) => {
-                                    console.log(`Participant ${i + 1}:`, p.name, '- Camera:', p.cameraOn ? 'ON' : 'OFF');
-                                });
-                            } else {
-                                console.log('❌ No participants list found');
-                            }
-                        } else {
-                            console.log('❌ findParticipantsList function not available');
-                        }
-                    } else {
-                        console.log('❌ ZoomWatch not loaded - extension may not be running');
-                    }
-                    console.log('=== END DEBUG INFO ===\n');
-                }
-            });
-            
-            this.updateStatusText('Debug complete - check console', 'success');
-            
-            // Reset status after 3 seconds
-            setTimeout(() => {
-                this.updateStatusMessage();
-            }, 3000);
-            
-        } catch (error) {
-            log(`❌ Error debugging: ${error.message}`);
-            this.updateStatusText('Debug failed', 'error');
-        }
-    }
-    
-    // === REVERSE ENGINEERING METHODS ===
-    
-    async exploreZoomInterface() {
-        try {
-            this.updateStatusText('Exploring Zoom interface...', 'info');
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            const response = await chrome.tabs.sendMessage(tab.id, { action: 'exploreInterface' });
-            
-            if (response && response.success) {
-                log('✅ Interface exploration complete:', response.data);
-                this.updateStatusText('Interface exploration complete - check console & extension logs', 'success');
-            } else {
-                this.updateStatusText('Interface exploration failed', 'error');
-            }
-            setTimeout(() => this.updateStatusMessage(), 3000);
-        } catch (error) {
-            log(`❌ Error exploring interface: ${error.message}`);
-            this.updateStatusText('Interface exploration error', 'error');
-        }
-    }
-    
-    async findClickableElements() {
-        try {
-            this.updateStatusText('Finding clickable elements...', 'info');
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            const response = await chrome.tabs.sendMessage(tab.id, { action: 'findClickableElements' });
-            
-            if (response && response.success) {
-                log('✅ Element analysis complete:', response.data);
-                this.updateStatusText('Element analysis complete - check console & extension logs', 'success');
-            } else {
-                this.updateStatusText('Element analysis failed', 'error');
-            }
-            setTimeout(() => this.updateStatusMessage(), 3000);
-        } catch (error) {
-            log(`❌ Error finding elements: ${error.message}`);
-            this.updateStatusText('Element analysis error', 'error');
-        }
-    }
-    
-    async analyzePanels() {
-        try {
-            this.updateStatusText('Analyzing panels...', 'info');
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            const response = await chrome.tabs.sendMessage(tab.id, { action: 'analyzePanels' });
-            
-            if (response && response.success) {
-                log('✅ Panel analysis complete:', response.data);
-                this.updateStatusText('Panel analysis complete - check console & extension logs', 'success');
-            } else {
-                this.updateStatusText('Panel analysis failed', 'error');
-            }
-            setTimeout(() => this.updateStatusMessage(), 3000);
-        } catch (error) {
-            log(`❌ Error analyzing panels: ${error.message}`);
-            this.updateStatusText('Panel analysis error', 'error');
-        }
-    }
-    
-    async interceptZoomEvents() {
-        try {
-            this.updateStatusText('Starting event interception...', 'info');
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            const response = await chrome.tabs.sendMessage(tab.id, { action: 'interceptEvents' });
-            
-            if (response && response.success) {
-                log('✅ Event interception started:', response.data);
-                this.updateStatusText('Event interception active - perform actions now!', 'success');
-            } else {
-                this.updateStatusText('Event interception failed', 'error');
-            }
-            setTimeout(() => this.updateStatusMessage(), 5000);
-        } catch (error) {
-            log(`❌ Error intercepting events: ${error.message}`);
-            this.updateStatusText('Event interception error', 'error');
-        }
-    }
-    
-    async findZoomAPIs() {
-        try {
-            this.updateStatusText('Discovering Zoom APIs...', 'info');
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            const response = await chrome.tabs.sendMessage(tab.id, { action: 'findAPIs' });
-            
-            if (response && response.success) {
-                log('✅ API discovery complete:', response.data);
-                this.updateStatusText('API discovery complete - check console & extension logs', 'success');
-            } else {
-                this.updateStatusText('API discovery failed', 'error');
-            }
-            setTimeout(() => this.updateStatusMessage(), 3000);
-        } catch (error) {
-            log(`❌ Error finding APIs: ${error.message}`);
-            this.updateStatusText('API discovery error', 'error');
-        }
-    }
-    
-    async debugPanelButtons() {
-        try {
-            this.updateStatusText('Debugging panel buttons...', 'info');
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            const response = await chrome.tabs.sendMessage(tab.id, { action: 'debugPanelButtons' });
-            
-            if (response && response.success) {
-                this.updateStatusText('Panel debug complete - check console', 'success');
-            } else {
-                this.updateStatusText('Panel debug failed', 'error');
-            }
-            setTimeout(() => this.updateStatusMessage(), 3000);
-        } catch (error) {
-            log(`❌ Error debugging panels: ${error.message}`);
-            this.updateStatusText('Panel debug error', 'error');
-        }
-    }
-    
-    async debugChatButtons() {
-        try {
-            this.updateStatusText('Debugging chat buttons...', 'info');
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            const response = await chrome.tabs.sendMessage(tab.id, { action: 'debugChatButtons' });
-            
-            if (response && response.success) {
-                this.updateStatusText('Chat debug complete - check console', 'success');
-            } else {
-                this.updateStatusText('Chat debug failed', 'error');
-            }
-            setTimeout(() => this.updateStatusMessage(), 3000);
-        } catch (error) {
-            log(`❌ Error debugging chat: ${error.message}`);
-            this.updateStatusText('Chat debug error', 'error');
-        }
-    }
-    
-    async checkMeetingContext() {
-        try {
-            this.updateStatusText('Checking meeting context...', 'info');
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            const response = await chrome.tabs.sendMessage(tab.id, { action: 'checkMeetingContext' });
-            
-            if (response && response.success) {
-                const isMeeting = response.data;
-                if (isMeeting) {
-                    this.updateStatusText('✅ In Zoom meeting - panel controls enabled', 'success');
-                } else {
-                    this.updateStatusText('❌ Not in Zoom meeting - panel controls disabled', 'error');
-                }
-            } else {
-                this.updateStatusText('Context check failed', 'error');
-            }
-            setTimeout(() => this.updateStatusMessage(), 3000);
-        } catch (error) {
-            log(`❌ Error checking context: ${error.message}`);
-            this.updateStatusText('Context check error', 'error');
-        }
-    }
-    
-    async debugParticipantSelector() {
-        try {
-            this.updateStatusText('Debugging participant selector...', 'info');
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            
-            // Force message to top frame only with source tag
-            const response = await chrome.tabs.sendMessage(
-                tab.id,
-                { source: 'zoomwatch', action: 'debugParticipantSelector' },
-                { frameId: 0 } // Top-level frame only
-            );
-            
-            if (response && response.success) {
-                this.updateStatusText('Participant selector debug complete - check console', 'success');
-            } else {
-                this.updateStatusText(response?.message || 'Participant selector debug failed', 'error');
-            }
-            setTimeout(() => this.updateStatusMessage(), 3000);
-        } catch (error) {
-            log(`❌ Error debugging participant selector: ${error.message}`);
-            this.updateStatusText('Participant selector debug error', 'error');
-        }
-    }
-    
-    async openPanels() {
-        try {
-            this.updateStatusText('Opening panels...', 'info');
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            const response = await chrome.tabs.sendMessage(tab.id, { action: 'openPanels' });
-            
-            if (response && response.success) {
-                this.updateStatusText('Panels opened successfully - check console', 'success');
-            } else {
-                this.updateStatusText('Failed to open panels', 'error');
-            }
-            setTimeout(() => this.updateStatusMessage(), 3000);
-        } catch (error) {
-            log(`❌ Error opening panels: ${error.message}`);
-            this.updateStatusText('Panel opening error', 'error');
-        }
-    }
-    
-    async forceOpenPanels() {
-        try {
-            this.updateStatusText('Force opening panels...', 'info');
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            const response = await chrome.tabs.sendMessage(tab.id, { action: 'forceOpenPanels' });
-            
-            if (response && response.success) {
-                this.updateStatusText('Panels force opened - check console', 'success');
-            } else {
-                this.updateStatusText('Failed to force open panels', 'error');
-            }
-            setTimeout(() => this.updateStatusMessage(), 3000);
-        } catch (error) {
-            log(`❌ Error force opening panels: ${error.message}`);
-            this.updateStatusText('Force panel opening error', 'error');
-        }
-    }
-    
-    async debugMeetingDetection() {
-        try {
-            this.updateStatusText('Debugging meeting detection...', 'info');
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            const response = await chrome.tabs.sendMessage(tab.id, { action: 'debugMeetingDetection' });
-            
-            if (response && response.success) {
-                this.updateStatusText('Meeting detection debug complete - check console', 'success');
-            } else {
-                this.updateStatusText('Meeting detection debug failed', 'error');
-            }
-            setTimeout(() => this.updateStatusMessage(), 3000);
-        } catch (error) {
-            log(`❌ Error debugging meeting detection: ${error.message}`);
-            this.updateStatusText('Meeting detection debug error', 'error');
-        }
-    }
-    
-    async debugRecipientSelection() {
-        try {
-            this.updateStatusText('Debugging recipient selection...', 'info');
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            const response = await chrome.tabs.sendMessage(tab.id, { action: 'debugRecipientSelection' });
-            
-            if (response && response.success) {
-                this.updateStatusText('Recipient selection debug complete - check console', 'success');
-            } else {
-                this.updateStatusText('Recipient selection debug failed', 'error');
-            }
-            setTimeout(() => this.updateStatusMessage(), 3000);
-        } catch (error) {
-            log(`❌ Error debugging recipient selection: ${error.message}`);
-            this.updateStatusText('Recipient selection debug error', 'error');
-        }
-    }
-    
-    async forceSelectRecipient() {
-        try {
-            this.updateStatusText('Force selecting recipient...', 'info');
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            const response = await chrome.tabs.sendMessage(tab.id, { action: 'forceSelectRecipient' });
-            
-            if (response && response.success) {
-                this.updateStatusText('Force selection complete - check console', 'success');
-            } else {
-                this.updateStatusText('Force selection failed', 'error');
-            }
-            setTimeout(() => this.updateStatusMessage(), 3000);
-        } catch (error) {
-            log(`❌ Error force selecting recipient: ${error.message}`);
-            this.updateStatusText('Force selection error', 'error');
-        }
-    }
-    
-    async debugMessageDeduplication() {
-        try {
-            this.updateStatusText('Debugging message deduplication...', 'info');
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            const response = await chrome.tabs.sendMessage(tab.id, { action: 'debugMessageDeduplication' });
-            
-            if (response && response.success) {
-                this.updateStatusText('Message deduplication debug complete - check console', 'success');
-            } else {
-                this.updateStatusText('Message deduplication debug failed', 'error');
-            }
-            setTimeout(() => this.updateStatusMessage(), 3000);
-        } catch (error) {
-            log(`❌ Error debugging message deduplication: ${error.message}`);
-            this.updateStatusText('Message deduplication debug error', 'error');
-        }
-    }
-    
-    // === PANEL CONTROL METHODS ===
-    
-    async openParticipantsPanel() {
-        try {
-            this.updateStatusText('Opening participants panel...', 'info');
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            const response = await chrome.tabs.sendMessage(tab.id, { action: 'openParticipants' });
-            
-            if (response && response.success) {
-                this.updateStatusText('Participants panel opened!', 'success');
-            } else {
-                this.updateStatusText('Failed to open participants panel', 'error');
-            }
-            setTimeout(() => this.updateStatusMessage(), 2000);
-        } catch (error) {
-            log(`❌ Error opening participants panel: ${error.message}`);
-            this.updateStatusText('Error opening participants panel', 'error');
-        }
-    }
-    
-    async closeParticipantsPanel() {
-        try {
-            this.updateStatusText('Closing participants panel...', 'info');
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            const response = await chrome.tabs.sendMessage(tab.id, { action: 'closeParticipants' });
-            
-            if (response && response.success) {
-                this.updateStatusText('Participants panel closed!', 'success');
-            } else {
-                this.updateStatusText('Failed to close participants panel', 'error');
-            }
-            setTimeout(() => this.updateStatusMessage(), 2000);
-        } catch (error) {
-            log(`❌ Error closing participants panel: ${error.message}`);
-            this.updateStatusText('Error closing participants panel', 'error');
-        }
-    }
-    
-    async openChatPanel() {
-        try {
-            this.updateStatusText('Opening chat panel...', 'info');
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            const response = await chrome.tabs.sendMessage(tab.id, { action: 'openChat' });
-            
-            if (response && response.success) {
-                this.updateStatusText('Chat panel opened!', 'success');
-            } else {
-                this.updateStatusText('Failed to open chat panel', 'error');
-            }
-            setTimeout(() => this.updateStatusMessage(), 2000);
-        } catch (error) {
-            log(`❌ Error opening chat panel: ${error.message}`);
-            this.updateStatusText('Error opening chat panel', 'error');
-        }
-    }
-    
-    async closeChatPanel() {
-        try {
-            this.updateStatusText('Closing chat panel...', 'info');
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            const response = await chrome.tabs.sendMessage(tab.id, { action: 'closeChat' });
-            
-            if (response && response.success) {
-                this.updateStatusText('Chat panel closed!', 'success');
-            } else {
-                this.updateStatusText('Failed to close chat panel', 'error');
-            }
-            setTimeout(() => this.updateStatusMessage(), 2000);
-        } catch (error) {
-            log(`❌ Error closing chat panel: ${error.message}`);
-            this.updateStatusText('Error closing chat panel', 'error');
-        }
-    }
+
 }
 
 // Add shake animation to CSS
@@ -1135,6 +680,8 @@ function log(message) {
 }
 
 // Initialize popup when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Small delay to ensure content script is ready
+    await new Promise(resolve => setTimeout(resolve, 500));
     new ZoomWatchPopup();
 });
